@@ -1,6 +1,15 @@
 "
 I'm a more advanced proxy that propagates itself during execution.
 When a proxy is executed, before letting the execution runs, it installs itself on all the implementators of the methods used in the method.
+
+```
+testCase := StringTest selector: #testAsCamelCase.
+(MpMethodProxy onMethod: testCase testMethod handler: MpProfilingHandler) install.
+testCase run.
+
+proxies := MpMethodProxy allInstances.
+proxies do: #uninstall.
+```
 "
 Class {
 	#name : #MpProfilingHandler,
