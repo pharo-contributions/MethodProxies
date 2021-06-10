@@ -224,6 +224,12 @@ MpMethodProxy >> isInstalled [
 	^ false
 ]
 
+{ #category : #testing }
+MpMethodProxy >> isMethodProxy [
+
+	^ true
+]
+
 { #category : #accessing }
 MpMethodProxy >> methodClass [
 	^ methodClass

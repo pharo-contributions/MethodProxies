@@ -18,10 +18,10 @@ MpMethodProxyTest >> handlerClass [
 ]
 
 { #category : #'tests - dead representation' }
-MpMethodProxyTest >> installMethodProxy: aMethodWrapper [
+MpMethodProxyTest >> installMethodProxy: aMethodProxy [
 
-	trackedWrappers add: aMethodWrapper.
-	aMethodWrapper install.
+	trackedWrappers add: aMethodProxy.
+	aMethodProxy install.
 
 ]
 
@@ -73,16 +73,16 @@ MpMethodProxyTest >> testExceptionsAfterInstrumentationDoNotBreakInstrumentation
 { #category : #'tests - safety' }
 MpMethodProxyTest >> testExceptionsAfterInstrumentationFlow [
 "Managing exceptions in the wrapper"
-	| w |
-	w := MpMethodProxy onMethod: Object >> #error: handler: MpCountingHandler new.
+	| p |
+	p := MpMethodProxy onMethod: Object >> #error: handler: MpCountingHandler new.
 	
-	self installMethodProxy: w.
+	self installMethodProxy: p.
 
 	"An error after instrumentation should not break the instrumentation.
 	Subsequent calls should still be instrumented"
 	2 timesRepeat: [
-		[MpClassB new error: 'error after instrumentation'.
-		self fail]
+		[ MpClassB new error: 'error after instrumentation'.
+		self fail ]
 			on: Error do: [ :error |
 				self assert: error messageText equals: 'error after instrumentation' ].]
 ]
@@ -170,31 +170,31 @@ MpMethodProxyTest >> testRecursiveMethodWrapperDoesNotRecurse [
 { #category : #'tests - installation' }
 MpMethodProxyTest >> testUninstall [
 
-	| mw method |
+	| mp method |
 	method := MpClassA >> #methodOne.
-	mw := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
-	mw install.
+	mp := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
+	mp install.
 	self assert: (MpClassA compiledMethodAt: #methodOne) isMethodProxy.
-	self assert: (MpClassA compiledMethodAt: #methodOne) == mw.
-	mw uninstall.
+	self assert: (MpClassA compiledMethodAt: #methodOne) == mp.
+	mp uninstall.
 	self assert: (MpClassA compiledMethodAt: #methodOne) == method.
-	self assert: mw wrappedMethod isNil
+	self assert: mp wrappedMethod isNil
 ]
 
 { #category : #'tests - installation' }
 MpMethodProxyTest >> testUninstallNestedInRightOrderIsOk [
 
-	| mw mw2 method |
+	| mp mp2 method |
 	method := MpClassA >> #methodOne.
-	mw := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
-	mw2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
-	mw install.
-	mw2 install.
+	mp := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
+	mp2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
+	mp install.
+	mp2 install.
 	self assert: (MpClassA compiledMethodAt: #methodOne) isMethodProxy.
-	self assert: (MpClassA compiledMethodAt: #methodOne) identicalTo: mw2.
-	mw2 uninstall.
-	self assert: (MpClassA compiledMethodAt: #methodOne) identicalTo: mw.
-	mw uninstall.
+	self assert: (MpClassA compiledMethodAt: #methodOne) identicalTo: mp2.
+	mp2 uninstall.
+	self assert: (MpClassA compiledMethodAt: #methodOne) identicalTo: mp.
+	mp uninstall.
 	self
 		assert: (MpClassA compiledMethodAt: #methodOne)
 		identicalTo: method
@@ -203,30 +203,30 @@ MpMethodProxyTest >> testUninstallNestedInRightOrderIsOk [
 { #category : #tests }
 MpMethodProxyTest >> testUnwrappedMethodAtOneLevelIsTheWrappedMethod [
 
-	| mw method |
+	| mp method |
 	[ 
 	method := MpClassA >> #methodOne.
-	mw := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
-	mw install.
-	self assert: mw unproxifiedMethod equals: method ] ensure: [ 
-		mw uninstall ]
+	mp := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
+	mp install.
+	self assert: mp unproxifiedMethod equals: method ] ensure: [ 
+		mp uninstall ]
 ]
 
 { #category : #tests }
 MpMethodProxyTest >> testUnwrappedMethodOfNestedMethodWrapperInTheCompiledMethod [
 
-	| mw method mw2 |
+	| mp method mp2 |
 	[ 
 	method := MpClassA >> #methodOne.
-	mw := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
-	mw install.
-	mw2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
-	mw2 install.
+	mp := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
+	mp install.
+	mp2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
+	mp2 install.
 
-	self assert: mw2 wrappedMethod equals: mw.
-	self assert: mw2 unproxifiedMethod equals: method ] ensure: [ 
-		mw2 uninstall.
-		mw uninstall ]
+	self assert: mp2 wrappedMethod equals: mp.
+	self assert: mp2 unproxifiedMethod equals: method ] ensure: [ 
+		mp2 uninstall.
+		mp uninstall ]
 ]
 
 { #category : #'tests - safety' }
@@ -269,24 +269,24 @@ MpMethodProxyTest >> testWrapMethodCalledDuringInstallationIsNotIntercepted [
 { #category : #tests }
 MpMethodProxyTest >> testWrappingTwiceIsPossible [
 
-	| mw method mw2 |
+	| mp1 method mp2 |
 	[ 
 	method := MpClassA >> #methodOne.
-	mw := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
-	mw install.
+	mp1 := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
+	mp1 install.
 
-	mw2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
-	mw2 install.
+	mp2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
+	mp2 install.
 
-	self assert: mw selector equals: #methodOne.
-	self assert: mw methodClass equals: MpClassA.
-	self assert: mw wrappedMethod equals: method.
+	self assert: mp1 selector equals: #methodOne.
+	self assert: mp1 methodClass equals: MpClassA.
+	self assert: mp1 wrappedMethod equals: method.
 
-	self assert: mw2 selector equals: #methodOne.
-	self assert: mw2 methodClass equals: MpClassA.
-	self assert: mw2 wrappedMethod equals: mw ] ensure: [ 
-		mw2 uninstall.
-		self assert: (MpClassA methodDict at: #methodOne) equals: mw.
-		mw uninstall.
+	self assert: mp2 selector equals: #methodOne.
+	self assert: mp2 methodClass equals: MpClassA.
+	self assert: mp2 wrappedMethod equals: mp1 ] ensure: [ 
+		mp2 uninstall.
+		self assert: (MpClassA methodDict at: #methodOne) equals: mp1.
+		mp1 uninstall.
 		self assert: (MpClassA methodDict at: #methodOne) equals: method ]
 ]
