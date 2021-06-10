@@ -39,18 +39,18 @@ p uninstall.
 ### Sharing Handlers
 
 h := MpAllocationProfilerHandler new.
-w1 := MpMethodWrapper 
+p1 := MpMethodWrapper 
 	onMethod: Behavior >> #basicNew 
 	handler: h.
-w1 install.
-w2 := MpMethodWrapper 
+p1 install.
+p2 := MpMethodWrapper 
 	onMethod: Behavior >> #basicNew: 
 	handler: h.
-w2 install.
-w3 := MpMethodWrapper 
+p2 install.
+p3 := MpMethodWrapper 
 	onMethod: Array class >> #new: 
 	handler: h.
-w3 install.
+p3 install.
 
 w1 uninstall.
 w2 uninstall.
