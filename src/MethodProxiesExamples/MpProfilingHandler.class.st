@@ -21,7 +21,7 @@ MpProfilingHandler >> beforeMethod [
 	stacks add: thisContext stack copy.
 	
 	count > 1 ifTrue: [ ^ self ].
-	wrappedMethod literalsEvenTheOnesInTheInnerBlocks
+	proxy literalsEvenTheOnesInTheInnerBlocks
 		select: [ :literal | literal isSymbol ]
 		thenDo: [ :potentialSelector | self instrumentImplementorsOf: potentialSelector ]
 ]

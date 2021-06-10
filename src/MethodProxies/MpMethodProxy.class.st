@@ -170,7 +170,8 @@ MpMethodProxy >> handler [
 
 { #category : #accessing }
 MpMethodProxy >> handler: aHandler [ 
-	handler := aHandler
+	handler := aHandler.
+	aHandler proxy: self
 ]
 
 { #category : #installation }
