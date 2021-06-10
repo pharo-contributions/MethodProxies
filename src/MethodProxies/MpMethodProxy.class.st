@@ -1,5 +1,5 @@
 "
-I'm a modern version of MethodWrappers for Pharo based on `run:with:in:` VM trick.
+I'm a modern implementation of Python's method decorators or MethodWrappers for Pharo based on `valueWithReceiver:arguments:` VM hook.
 
 Method proxies are objects that wrap methods stored in the method dictionary of the class. 
 Some support before and after action the execution of the original method. 
@@ -30,11 +30,7 @@ testCounts
 ```
 
 
-
-
-
-
-This package is developed and maintained by S. Ducasse, but feel free to give a hand. This project contains also a little implementation by Pavel Krivanek.
+This package is developed and maintained by S. Ducasse, G. Polito and P. Tesone, but feel free to give a hand. 
 
 
 "
