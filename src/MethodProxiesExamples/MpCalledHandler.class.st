@@ -34,5 +34,5 @@ MpCalledHandler >> called: aBoolean [
 MpCalledHandler >> initialize [
 
 	super initialize.
-	self called: false
+	called := false
 ]

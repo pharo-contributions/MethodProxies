@@ -93,30 +93,24 @@ MpMethodProxy class >> countAllInstances [
 ]
 
 { #category : #'instance creation' }
-MpMethodProxy class >> on: aSymbol inClass: aClass [
+MpMethodProxy class >> on: selector inClass: aClass [
 
-	| wrapper |
-	(self canWrap: aSymbol inClass: aClass) ifFalse: [^ nil].
-	wrapper := self new.
-	wrapper class: aClass selector: aSymbol.
-	^ wrapper
+	| proxy |
+	(self canWrap: selector inClass: aClass) ifFalse: [^ nil].
+	proxy := self new.
+	proxy class: aClass selector: selector.
+	^ proxy
 ]
 
 { #category : #'instance creation' }
-MpMethodProxy class >> on: aSymbol inClass: aClass handler: aHandler [
+MpMethodProxy class >> on: selector inClass: aClass handler: aHandler [
 
-	| wrapper |
-	(self canWrap: aSymbol inClass: aClass) ifFalse: [^ nil].
-	wrapper := self new.
-	wrapper class: aClass selector: aSymbol.
-	wrapper handler: aHandler.
-	^ wrapper
-]
-
-{ #category : #'instance creation' }
-MpMethodProxy class >> onMethod: aMethod [
-
-	^ self on: aMethod selector inClass: aMethod methodClass
+	| proxy |
+	(self canWrap: selector inClass: aClass) ifFalse: [ ^ nil ].
+	proxy := self new.
+	proxy class: aClass selector: selector.
+	proxy handler: aHandler.
+	^ proxy
 ]
 
 { #category : #'instance creation' }

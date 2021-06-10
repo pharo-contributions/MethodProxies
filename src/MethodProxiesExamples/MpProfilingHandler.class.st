@@ -26,13 +26,6 @@ MpProfilingHandler >> beforeMethod [
 		thenDo: [ :potentialSelector | self instrumentImplementorsOf: potentialSelector ]
 ]
 
-{ #category : #initialization }
-MpProfilingHandler >> class: aClass selector: aSymbol [
-
-	self count: 0.
-	^ super class: aClass selector: aSymbol
-]
-
 { #category : #accessing }
 MpProfilingHandler >> count [
 
@@ -43,6 +36,13 @@ MpProfilingHandler >> count [
 MpProfilingHandler >> count: anInteger [
 
 	count := anInteger
+]
+
+{ #category : #initialization }
+MpProfilingHandler >> initialize [
+
+	super initialize.
+	count := 0.
 ]
 
 { #category : #evaluating }
