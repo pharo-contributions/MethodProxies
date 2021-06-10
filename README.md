@@ -52,9 +52,9 @@ p3 := MpMethodWrapper
 	handler: h.
 p3 install.
 
-w1 uninstall.
-w2 uninstall.
-w3 uninstall.
+p1 uninstall.
+p2 uninstall.
+p3 uninstall.
 ```
 
 
