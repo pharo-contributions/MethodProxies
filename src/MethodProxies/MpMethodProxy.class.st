@@ -42,67 +42,18 @@ Class {
 		'methodClass',
 		'isDisabled',
 		'handler',
-		'unproxifiedMethod'
+		'proxifiedMethod'
 	],
-	#classVars : [
-		'IsActiveInExecutionStack'
+	#pools : [
+		'MpMethodProxyPool'
 	],
 	#category : #MethodProxies
 }
-
-{ #category : #testing }
-MpMethodProxy class >> canWrap: aSelector inClass: aClass [
-	"Test if a method can be wrapped without causing infinite recursion."
-
-	| method |
-	(aClass includesBehavior: MpMethodProxy) ifTrue: [^ false].
-	"There are probably more cause of infinite loop."
-	((aClass includesBehavior: CompiledMethod)
-		and: [ aSelector == #valueWithReceiver:arguments: ])
-			ifTrue: [^ false].
-	((aClass includesBehavior: BlockClosure)
-		and: [#(ensure: value) includes: aSelector])
-			ifTrue: [^ false].
-	(aClass includesSelector: aSelector) 
-		ifFalse: [^ false].
-	method := aClass compiledMethodAt: aSelector ifAbsent: [nil].
-	"a bit overly defensive but..."
-	^ method notNil
-]
-
-{ #category : #statistics }
-MpMethodProxy class >> countAllInstances [
-	"self countAllInstances"
-
-	| totalCount |
-	totalCount := 0.
-	Smalltalk garbageCollect.
-	^ String streamContents: [ :s |  
-		self withAllSubclassesDo: [:each |
-			| count |
-			count := each allInstances size.
-			totalCount := totalCount + count.
-			s cr ; nextPutAll: each name; nextPutAll: ' -> '. 
-			count printOn: s ].
-		s cr; nextPutAll: '=== TOTAL COUNT -> '.
-		totalCount printOn: s ]
-]
-
-{ #category : #'instance creation' }
-MpMethodProxy class >> on: selector inClass: aClass [
-
-	| proxy |
-	(self canWrap: selector inClass: aClass) ifFalse: [^ nil].
-	proxy := self new.
-	proxy class: aClass selector: selector.
-	^ proxy
-]
 
 { #category : #'instance creation' }
 MpMethodProxy class >> on: selector inClass: aClass handler: aHandler [
 
 	| proxy |
-	(self canWrap: selector inClass: aClass) ifFalse: [ ^ nil ].
 	proxy := self new.
 	proxy class: aClass selector: selector.
 	proxy handler: aHandler.
@@ -122,11 +73,6 @@ MpMethodProxy class >> uninstallAllWrappers [
 	self allSubInstancesDo: [ :inst | inst uninstall ]
 ]
 
-{ #category : #integration }
-MpMethodProxy >> cachePragmas [
-	
-]
-
 { #category : #initialization }
 MpMethodProxy >> class: aClass selector: aSymbol [
 
@@ -143,8 +89,8 @@ MpMethodProxy >> disable [
 
 { #category : #accessing }
 MpMethodProxy >> doesNotUnderstand: aMessage [
-	^ unproxifiedMethod 
-			ifNotNil: [ unproxifiedMethod 
+	^ proxifiedMethod 
+			ifNotNil: [ proxifiedMethod 
 								perform: aMessage selector 
 								withArguments: aMessage arguments ]
 			ifNil: [ super doesNotUnderstand: aMessage ]
@@ -182,8 +128,12 @@ MpMethodProxy >> install [
 	"We have a method proxy with a method = class * selector of the method it will proxy."
 	
 	|  method |
-	method := methodClass compiledMethodAt: selector ifAbsent: [ ^ self ].
-	(self shouldWrap: method) ifFalse: [ ^ self ].
+	method := methodClass compiledMethodAt: selector ifAbsent: [ 
+		MpCannotInstall signalWith: self ].
+	
+	(self shouldWrap: method) ifFalse: [ 
+		MpCannotInstall signalWith: self ].
+	
 	self unproxifiedMethod: method.
 	methodClass methodDict at: selector put: self.
 	
@@ -238,12 +188,6 @@ MpMethodProxy >> name [
 	^ self printString
 ]
 
-{ #category : #integration }
-MpMethodProxy >> primitive [
-
-	^ 0
-]
-
 { #category : #printing }
 MpMethodProxy >> printOn: aStream [
 
@@ -257,15 +201,26 @@ MpMethodProxy >> printOn: aStream [
 ]
 
 { #category : #evaluating }
+MpMethodProxy >> receiver: aReceiver withArgs: argArray executeMethod: compiledMethod [
+	"Execute compiledMethod against the receiver and args in argArray"
+
+	<primitive: 188>
+	<methodProxyCannotWrap>
+	self primitiveFailed
+]
+
+{ #category : #evaluating }
 MpMethodProxy >> run: aSelector with: anArrayOfObjects in: aReceiver [
 
 	"Do not intercept"
+	<methodProxyCannotWrap>
+	
 	| returnValue |
 	(isDisabled or: [
 		"Check explicitly that the flag has been set.
 		This allows proxies to work independently of initialization side effects."
-		IsActiveInExecutionStack == true]) ifTrue: [
-			^ unproxifiedMethod valueWithReceiver: aReceiver arguments: anArrayOfObjects ].
+		IsActiveInExecutionStack == true ]) ifTrue: [
+			^ self receiver: aReceiver withArgs: anArrayOfObjects executeMethod: proxifiedMethod ].
 	
 	"We are now in the instrumentation world.
 	Do not instrument the instrumentation."
@@ -275,10 +230,7 @@ MpMethodProxy >> run: aSelector with: anArrayOfObjects in: aReceiver [
 	Otherwise the non-local return logic would be instrumented once the ensure block is executed.
 	However, since a lot of code executes between the ensure block and the real method return, this could end in infinite loops"
 	[returnValue := self valueWithReceiver: aReceiver arguments: anArrayOfObjects ]
-		ensure: [ 
-			"About to go back to the non-instrumented world.
-			Turn back on instrumentation"
-			IsActiveInExecutionStack:= false ].
+		ensure: MpMethodProxyDeactivator new.
 	^ returnValue
 ]
 
@@ -297,8 +249,13 @@ MpMethodProxy >> selector: aSymbol [
 { #category : #installation }
 MpMethodProxy >> shouldWrap: aMethod [
 	
-	^ aMethod isCompiledMethod or: [
-		aMethod handler class ~~ self handler class ]
+	(aMethod isCompiledMethod not and: [
+		aMethod handler class ~~ self handler class ])
+			ifTrue: [ ^ true ].
+	
+	aMethod isCompiledMethod ifFalse: [ ^ false ].
+	
+	^ aMethod pragmas noneSatisfy: [ :pragma | pragma selector = #methodProxyCannotWrap ]
 ]
 
 { #category : #installation }
@@ -311,27 +268,28 @@ MpMethodProxy >> uninstall [
 		^ self ].
 	installedMethod == self
 		ifTrue: [ methodClass methodDict at: selector put: installedMethod wrappedMethod ].
+
 	self unproxifiedMethod: nil.
-	IsActiveInExecutionStack := false.
+	IsActiveInExecutionStack := false
 ]
 
 { #category : #accessing }
 MpMethodProxy >> unproxifiedMethod [
 	"The unproxifedMethod returns the proxified method even in case we have multiple proxified nesting."
 	
-	^ unproxifiedMethod ifNotNil: [ unproxifiedMethod unproxifiedMethod ]
+	^ proxifiedMethod ifNotNil: [ proxifiedMethod unproxifiedMethod ]
 ]
 
 { #category : #'when installed' }
 MpMethodProxy >> unproxifiedMethod: aCompiledMethod [
 
-	unproxifiedMethod := aCompiledMethod
+	proxifiedMethod := aCompiledMethod
 ]
 
 { #category : #evaluating }
 MpMethodProxy >> valueWithReceiver: receiver arguments: arguments [
 
-	
+	<methodProxyCannotWrap>
 	| result |
 	
 	"Hooking into user methods to define before actions.
@@ -342,8 +300,11 @@ MpMethodProxy >> valueWithReceiver: receiver arguments: arguments [
 	Otherwise the non-local return logic would be instrumented and this could end in infinite loops"
 	[
 		IsActiveInExecutionStack := false.
-		result := unproxifiedMethod valueWithReceiver: receiver arguments: arguments
-	] ensure: [ IsActiveInExecutionStack := true ].
+		result := self receiver: receiver withArgs: arguments executeMethod: proxifiedMethod.
+		
+		"Eagerly set it to true to avoid instrumenting all messages done during the ensure"
+		IsActiveInExecutionStack := true.
+	] methodProxyEnsure: MpMethodProxyActivator new.
 
 	"Hooking into user methods to define after actions.
 	After actions are not instrumented."
@@ -365,5 +326,5 @@ MpMethodProxy >> wrappedClass: aClass [
 { #category : #'when installed' }
 MpMethodProxy >> wrappedMethod [
 
-	^ unproxifiedMethod
+	^ proxifiedMethod
 ]

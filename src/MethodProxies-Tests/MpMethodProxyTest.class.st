@@ -12,6 +12,21 @@ MpMethodProxyTest class >> shouldInheritSelectors [
 	^ true
 ]
 
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> assertCannotInstall: mp [
+
+	[mp install.
+	self fail.]
+		on: MpCannotInstall do: [ :ex |
+			self assert: ex methodProxy equals: mp ]
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> callEnsureWithNonLocalReturn [
+	
+	[ ^ 7 ] ensure: [ 2 ]
+]
+
 { #category : #hook }
 MpMethodProxyTest >> handlerClass [ 
 	^ MpHandler
@@ -39,6 +54,156 @@ MpMethodProxyTest >> tearDown [
 
 	trackedWrappers do: [ :e | e uninstall ].
 	super tearDown
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCanWrapAboutToReturnThroughWithNonLocalReturn [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: Context >> #aboutToReturn:through: handler: (handler := MpCountingHandler new).
+	
+	self installMethodProxy: mp.
+
+	self callEnsureWithNonLocalReturn.
+
+	self assert: handler count equals: 1
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCanWrapEnsure [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: BlockClosure >> #ensure: handler: (handler := MpCountingHandler new).
+	
+	self installMethodProxy: mp.
+
+	[ 1 ] ensure: [ 2 ].
+
+	self assert: handler count equals: 1
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCanWrapEnsureNonLocalReturn [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: BlockClosure >> #ensure: handler: (handler := MpCountingHandler new).
+	
+	self installMethodProxy: mp.
+
+	self callEnsureWithNonLocalReturn.
+
+	self assert: handler count equals: 1
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCanWrapEnsureWithException [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: BlockClosure >> #ensure: handler: (handler := MpCountingHandler new).
+	
+	self installMethodProxy: mp.
+
+	[[ 1 error ] ensure: [ 2 ]] on: Error do: [ "nothing" ].
+
+	self assert: handler count equals: 1
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCanWrapValue [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: FullBlockClosure >> #value handler: (handler := MpCountingHandler new).
+	
+	self installMethodProxy: mp.
+
+	[[ 1 ] value] value.
+
+	self assert: handler count equals: 2
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCanWrapValueWithException [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: FullBlockClosure >> #value handler: (handler := MpCountingHandler new).
+	
+	self installMethodProxy: mp.
+
+	[[[ 1 error ] value] value] on: Error do: #yourself "to avoid an extra block".
+
+	self assert: handler count equals: 2 "value" + 1 "on:do:"
+]
+
+{ #category : #'tests - installation' }
+MpMethodProxyTest >> testCannotProxyUnexistentMethod [
+
+	| mp |
+	mp := MpMethodProxy on: #methodOne inClass: Object handler: self handlerClass new.
+	
+	self assertCannotInstall: mp
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCannotWrapCriticalProxyMethods [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: MpMethodProxy >> #valueWithReceiver:arguments: handler: (handler := MpCountingHandler new).
+	
+	self assertCannotInstall: mp
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCannotWrapCriticalProxyMethods2 [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: MpMethodProxy >> #receiver:withArgs:executeMethod: handler: (handler := MpCountingHandler new).
+	
+	self assertCannotInstall: mp
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCannotWrapCriticalProxyMethods3 [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: MpMethodProxy >> #run:with:in: handler: (handler := MpCountingHandler new).
+	
+	self assertCannotInstall: mp
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCannotWrapCriticalProxyMethods4 [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: BlockClosure >> #methodProxyEnsure: handler: (handler := MpCountingHandler new).
+	
+	self assertCannotInstall: mp
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCannotWrapCriticalProxyMethods5 [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: MpMethodProxyActivator >> #value handler: (handler := MpCountingHandler new).
+	
+	self assertCannotInstall: mp
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCannotWrapCriticalProxyMethods6 [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: MpMethodProxyDeactivator >> #value handler: (handler := MpCountingHandler new).
+	
+	self assertCannotInstall: mp
+]
+
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testCannotWrapCriticalProxyMethods7 [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: MpMethodProxyPool class >> #protect handler: (handler := MpCountingHandler new).
+	
+	self assertCannotInstall: mp
 ]
 
 { #category : #'tests - dead representation' }
@@ -104,14 +269,6 @@ MpMethodProxyTest >> testExceptionsDuringInstrumentationDoNotBreakInstrumentatio
 				self assert: error messageText equals: 'error during instrumentation' ].]
 ]
 
-{ #category : #'tests - dead representation' }
-MpMethodProxyTest >> testInstallOnWrongClass [
-
-	| mw |
-	mw := MpMethodProxy on: #methodOne inClass: Object handler: self handlerClass new.
-	self assert: mw isNil
-]
-
 { #category : #'tests - installation' }
 MpMethodProxyTest >> testInstallSetCompiledMethod [
 
@@ -141,19 +298,19 @@ MpMethodProxyTest >> testIsInstalled [
 { #category : #'tests - installation' }
 MpMethodProxyTest >> testIsInstalledNestedMWAreNotInstalled [
 
-	| mw method mw2 |
+	| mp method mp2 |
 	method := MpClassA >> #methodOne.
-	mw := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
-	mw2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
-	mw install.
-	mw2 install.
-	self deny: mw isInstalled.
-	self assert: mw2 isInstalled.
-	mw2 uninstall.
-	self deny: mw2 isInstalled.
-	self assert: mw isInstalled.
-	mw uninstall.
-	self deny: mw isInstalled
+	mp := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
+	mp2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
+	mp install.
+	mp2 install.
+	self deny: mp isInstalled.
+	self assert: mp2 isInstalled.
+	mp2 uninstall.
+	self deny: mp2 isInstalled.
+	self assert: mp isInstalled.
+	mp uninstall.
+	self deny: mp isInstalled
 ]
 
 { #category : #'tests - safety' }
