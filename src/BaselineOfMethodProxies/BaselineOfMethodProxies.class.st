@@ -12,7 +12,7 @@ BaselineOfMethodProxies >> baseline: spec [
 		spec 
 			package: #'MethodProxies';
 			
-			package: #'MethodProxies-Test'
+			package: #'MethodProxies-Tests'
 			with: [ spec requires: #(#'MethodProxies')];
 			
 			package: #'MethodProxiesExamples'
@@ -23,6 +23,6 @@ BaselineOfMethodProxies >> baseline: spec [
 		
 		spec 
 			group: 'Core' with: #(#'MethodProxies' );
-			group: 'All' with: #(#'MethodProxies' #'MethodProxies-Test' #'MethodProxiesExamples' #'MethodProxiesExamples-Tests') ].
+			group: 'All' with: #(#'MethodProxies' #'MethodProxies-Tests' #'MethodProxiesExamples' #'MethodProxiesExamples-Tests') ].
 
 ]
