@@ -261,8 +261,11 @@ MpMethodProxy >> run: aSelector with: anArrayOfObjects in: aReceiver [
 
 	"Do not intercept"
 	| returnValue |
-	(isDisabled or: [IsActiveInExecutionStack]) ifTrue: [
-		^ unproxifiedMethod valueWithReceiver: aReceiver arguments: anArrayOfObjects ].
+	(isDisabled or: [
+		"Check explicitly that the flag has been set.
+		This allows proxies to work independently of initialization side effects."
+		IsActiveInExecutionStack == true]) ifTrue: [
+			^ unproxifiedMethod valueWithReceiver: aReceiver arguments: anArrayOfObjects ].
 	
 	"We are now in the instrumentation world.
 	Do not instrument the instrumentation."
