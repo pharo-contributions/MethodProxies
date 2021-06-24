@@ -3,15 +3,15 @@ I'm a simple little profiler that can store all the objects returned by the spyi
 
 ```
 h := MpAllocationProfilerHandler new.
-p1 := MpMethodWrapper 
+p1 := MpMethodProxy 
 	onMethod: Behavior >> #basicNew 
 	handler: h.
 p1 install.
-p2 := MpMethodWrapper 
+p2 := MpMethodProxy 
 	onMethod: Behavior >> #basicNew: 
 	handler: h.
 p2 install.
-p3 := MpMethodWrapper 
+p3 := MpMethodProxy 
 	onMethod: Array class >> #new: 
 	handler: h.
 p3 install.
