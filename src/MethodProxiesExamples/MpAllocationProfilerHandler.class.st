@@ -27,11 +27,12 @@ Class {
 }
 
 { #category : #initialization }
-MpAllocationProfilerHandler >> afterExecutionWithReceiver: receiver arguments: arguments returnValue: returnValue [
-	
+MpAllocationProfilerHandler >> afterExecutionWithReceiver: receiver arguments: arguments returnValue: returnValue callerContext: callerContext [
+
 	| allocationsPerClass |
+	
 	allocationsPerClass := allocations at: receiver ifAbsentPut: [ OrderedCollection new ].
-	allocationsPerClass add: returnValue.
+	allocationsPerClass add: {returnValue. callerContext method}.
 	^ returnValue
 ]
 

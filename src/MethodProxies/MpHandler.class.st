@@ -22,6 +22,13 @@ MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects re
 ]
 
 { #category : #evaluating }
+MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue callerContext: aContext [
+
+	self afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue.
+	^ aReturnValue
+]
+
+{ #category : #evaluating }
 MpHandler >> afterMethod [
 	"Perform action after execution."
 ]
@@ -30,6 +37,12 @@ MpHandler >> afterMethod [
 MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
 	self beforeMethod
+]
+
+{ #category : #evaluating }
+MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects callerContext: aContext [
+
+	self beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects
 ]
 
 { #category : #evaluating }
