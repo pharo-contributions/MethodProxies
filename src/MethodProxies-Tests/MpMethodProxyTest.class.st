@@ -354,6 +354,26 @@ MpMethodProxyTest >> testSharedHandler [
 	
 ]
 
+{ #category : #tests }
+MpMethodProxyTest >> testSharedHandlerModel [
+	|h1 h2 mp1 mp2 model|
+	h1 := self handlerClass new.
+	h2 := self handlerClass new.
+	
+	mp1 := MpMethodProxy on: #methodOne inClass: MpClassA handler: h1.
+	mp2 := MpMethodProxy on: #methodTwo inClass: MpClassA handler: h2.
+	
+	self assert: h1 proxy identicalTo: mp1.
+	self assert: h2 proxy identicalTo: mp2.
+	
+	model := Object new.
+	h1 model: model.
+	h2 model: model.
+	
+	self assert: h1 model identicalTo: model.
+	self assert: h2 model identicalTo: model
+]
+
 { #category : #'tests - installation' }
 MpMethodProxyTest >> testUninstall [
 

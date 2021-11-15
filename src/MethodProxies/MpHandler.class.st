@@ -9,10 +9,17 @@ Class {
 	#name : #MpHandler,
 	#superclass : #Object,
 	#instVars : [
-		'proxy'
+		'proxy',
+		'handlerModel'
 	],
 	#category : #MethodProxies
 }
+
+{ #category : #'instance creation' }
+MpHandler class >> on: aModel [
+
+	^ self new model: aModel
+]
 
 { #category : #evaluating }
 MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue [
@@ -36,7 +43,32 @@ MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 MpHandler >> beforeMethod [
 ]
 
-{ #category : #evaluating }
+{ #category : #accessing }
+MpHandler >> handlerModel [
+
+	^ handlerModel ifNil: [ handlerModel := MpHandlerModel new ]
+]
+
+{ #category : #accessing }
+MpHandler >> model [
+
+	^ self handlerModel model
+]
+
+{ #category : #accessing }
+MpHandler >> model: anObject [
+
+	self handlerModel model: anObject
+]
+
+{ #category : #accessing }
+MpHandler >> proxy [
+	^self handlerModel proxy
+
+]
+
+{ #category : #accessing }
 MpHandler >> proxy: aMethodProxy [
-	proxy := aMethodProxy
+	self handlerModel proxy: aMethodProxy
+
 ]
