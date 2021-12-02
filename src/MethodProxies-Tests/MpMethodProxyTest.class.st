@@ -324,6 +324,56 @@ MpMethodProxyTest >> testRecursiveMethodWrapperDoesNotRecurse [
 	self assert: MpMockObject new recursiveMethod equals: 'trapped [original]'.
 ]
 
+{ #category : #tests }
+MpMethodProxyTest >> testSharedHandler [
+	"This test illustrates handler sharing which seems conceptually flawed.
+	We try to share a handler h between two proxies mp1 and mp2.
+	
+	Because handlers and proxies are tied through an inverse relation, setting the handler h to the proxy mp1 
+	automatically sets the proxy mp1 to h.
+	
+	Therefore, h proxy == mp1.
+	
+	However, if just after we create the proxy mp2 and try to share the handler h, the inverse relation will
+	make the proxy of h to become mp2.
+	Then h proxy == mp2.
+	
+	We are effectively sharing h among the two proxies, but actions upon method interception
+	happen in h, who will only ever know the last proxy. 
+	Therefore, when proxy mp1 intercepts a method and calls h, h will be confused because it thinks the interceptions comes from proxy mp2.	"
+	|h mp1 mp2|
+	h := self handlerClass new.
+	
+	mp1 := MpMethodProxy on: #methodOne inClass: MpClassA handler: h.
+	self assert: h proxy identicalTo: mp1.
+	
+	mp2 := MpMethodProxy on: #methodTwo inClass: MpClassA handler: h.
+	
+	self deny: h proxy identicalTo: mp1.
+	self assert: h proxy identicalTo: mp2.
+	
+]
+
+{ #category : #tests }
+MpMethodProxyTest >> testSharedHandlerModel [
+	|h1 h2 mp1 mp2 model|
+	h1 := self handlerClass new.
+	h2 := self handlerClass new.
+	
+	mp1 := MpMethodProxy on: #methodOne inClass: MpClassA handler: h1.
+	mp2 := MpMethodProxy on: #methodTwo inClass: MpClassA handler: h2.
+	
+	self assert: h1 proxy identicalTo: mp1.
+	self assert: h2 proxy identicalTo: mp2.
+	
+	model := Object new.
+	h1 model: model.
+	h2 model: model.
+	
+	self assert: h1 model identicalTo: model.
+	self assert: h2 model identicalTo: model
+]
+
 { #category : #'tests - installation' }
 MpMethodProxyTest >> testUninstall [
 
