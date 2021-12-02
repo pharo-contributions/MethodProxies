@@ -8,9 +8,6 @@ The main API is composed of two methods:
 Class {
 	#name : #MpHandler,
 	#superclass : #Object,
-	#instVars : [
-		'proxy'
-	],
 	#category : #MethodProxies
 }
 
@@ -34,9 +31,4 @@ MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
 { #category : #evaluating }
 MpHandler >> beforeMethod [
-]
-
-{ #category : #evaluating }
-MpHandler >> proxy: aMethodProxy [
-	proxy := aMethodProxy
 ]

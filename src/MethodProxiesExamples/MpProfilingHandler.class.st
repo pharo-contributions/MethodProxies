@@ -3,12 +3,24 @@ I'm a more advanced proxy that propagates itself during execution.
 When a proxy is executed, before letting the execution runs, it installs itself on all the implementators of the methods used in the method.
 
 ```
+proxy := nil.
+proxies := nil.
+Smalltalk garbageCollect.
+
 testCase := StringTest selector: #testAsCamelCase.
-(MpMethodProxy onMethod: testCase testMethod handler: MpProfilingHandler) install.
+testMethod := StringTest lookupSelector: testCase selector.
+
+proxy := MpMethodProxy
+				onMethod: testMethod
+				handler: (MpProfilingHandler new
+					wrappedMethod: testMethod;
+					yourself).
+proxy install.
 testCase run.
 
 proxies := MpMethodProxy allInstances.
 proxies do: #uninstall.
+proxies collect: #handler
 ```
 "
 Class {
@@ -16,7 +28,7 @@ Class {
 	#superclass : #MpHandler,
 	#instVars : [
 		'count',
-		'stacks'
+		'wrappedMethod'
 	],
 	#category : #MethodProxiesExamples
 }
@@ -25,12 +37,9 @@ Class {
 MpProfilingHandler >> beforeMethod [
 
 	self count: self count + 1.
-	
-	"Only do instrumentation once"
-	stacks add: thisContext stack copy.
-	
+
 	count > 1 ifTrue: [ ^ self ].
-	proxy literalsEvenTheOnesInTheInnerBlocks
+	wrappedMethod literalsEvenTheOnesInTheInnerBlocks
 		select: [ :literal | literal isSymbol ]
 		thenDo: [ :potentialSelector | self instrumentImplementorsOf: potentialSelector ]
 ]
@@ -57,9 +66,24 @@ MpProfilingHandler >> initialize [
 { #category : #evaluating }
 MpProfilingHandler >> instrumentImplementorsOf: potentialSelector [
 
-	| proxy |
+	| newProxy |
 	potentialSelector implementors do: [ :method |
-		proxy := MpMethodProxy onMethod: method handler: MpProfilingHandler new.
-		proxy ifNotNil: [ proxy install ].
+		newProxy := MpMethodProxy
+			onMethod: method
+			handler: (MpProfilingHandler new
+				wrappedMethod: method;
+				yourself).
+		(newProxy notNil and: [ (newProxy shouldWrap: method) ])
+			ifTrue: [ newProxy install ].
 	]
+]
+
+{ #category : #accessing }
+MpProfilingHandler >> wrappedMethod [
+	^ wrappedMethod
+]
+
+{ #category : #evaluating }
+MpProfilingHandler >> wrappedMethod: aMethod [
+	wrappedMethod := aMethod
 ]
