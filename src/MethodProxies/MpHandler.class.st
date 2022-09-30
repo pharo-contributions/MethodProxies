@@ -24,8 +24,9 @@ MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects re
 { #category : #evaluating }
 MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue callerContext: aContext [
 
-	self afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue.
-	^ aReturnValue
+	^ self afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue.
+	
+	
 ]
 
 { #category : #evaluating }
