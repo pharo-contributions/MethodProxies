@@ -22,14 +22,6 @@ MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects re
 ]
 
 { #category : #evaluating }
-MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue callerContext: aContext [
-
-	^ self afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue.
-	
-	
-]
-
-{ #category : #evaluating }
 MpHandler >> afterMethod [
 	"Perform action after execution."
 ]
@@ -41,13 +33,22 @@ MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 ]
 
 { #category : #evaluating }
-MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects callerContext: aContext [
-
-	self beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects
+MpHandler >> beforeMethod [
 ]
 
 { #category : #evaluating }
-MpHandler >> beforeMethod [
+MpHandler >> captureCallingContext [
+
+	| runWithInContext |
+	
+	"Find the context of #run:with:in:"	
+	runWithInContext := thisContext sender.
+	[ runWithInContext isNil 
+		or: [ runWithInContext method isCompiledMethod and: [runWithInContext method selector = #run:with:in:] ] ] 
+		whileFalse: [ runWithInContext := runWithInContext sender ].
+	
+	"Find the real sender"	
+	^ runWithInContext ifNotNil: [ runWithInContext sender ]
 ]
 
 { #category : #evaluating }

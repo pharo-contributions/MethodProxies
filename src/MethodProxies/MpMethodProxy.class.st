@@ -290,14 +290,12 @@ MpMethodProxy >> unproxifiedMethod: aCompiledMethod [
 MpMethodProxy >> valueWithReceiver: receiver arguments: arguments [
 
 	<methodProxyCannotWrap>
-	| result callerContext |
+	| result |
 	
-	"We capture the caller context in case the handler want to use it"
-	callerContext := thisContext sender.
 	
 	"Hooking into user methods to define before actions.
 	Before actions are not instrumented."
-	handler beforeExecutionWithReceiver: receiver arguments: arguments callerContext: callerContext.
+	handler beforeExecutionWithReceiver: receiver arguments: arguments.
 	
 	"Purposely do not use a non-local return.
 	Otherwise the non-local return logic would be instrumented and this could end in infinite loops"
@@ -311,7 +309,7 @@ MpMethodProxy >> valueWithReceiver: receiver arguments: arguments [
 
 	"Hooking into user methods to define after actions.
 	After actions are not instrumented."
-	^ handler afterExecutionWithReceiver: receiver arguments: arguments returnValue: result callerContext: callerContext
+	^ handler afterExecutionWithReceiver: receiver arguments: arguments returnValue: result
 ]
 
 { #category : #accessing }
