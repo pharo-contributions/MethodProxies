@@ -423,6 +423,21 @@ MpMethodProxyTest >> testWrapMethodCalledDuringInstallationIsNotIntercepted [
 	self deny: handler called
 ]
 
+{ #category : #'tests - safety' }
+MpMethodProxyTest >> testWrapNonLocalReturns [
+
+	| mp handler |
+	mp := MpMethodProxy
+		      onMethod: MpClassA >> #methodAcceptingABlock:
+		      handler: (handler := MpAfterCounterHandler new).
+
+	self installMethodProxy: mp.
+
+	MpClassA new methodWithNonLocalReturn.
+
+	self assert: handler count equals: 1
+]
+
 { #category : #tests }
 MpMethodProxyTest >> testWrappingTwiceIsPossible [
 
