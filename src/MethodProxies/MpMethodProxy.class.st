@@ -111,9 +111,9 @@ MpMethodProxy >> handler [
 ]
 
 { #category : #accessing }
-MpMethodProxy >> handler: aHandler [ 
-	handler := aHandler.
-	aHandler proxy: self
+MpMethodProxy >> handler: aHandler [
+
+	handler := aHandler
 ]
 
 { #category : #installation }
