@@ -43,7 +43,9 @@ MpHandler >> captureCallingContext [
 
 	| runWithInContext |
 	
-	"Find the context of #run:with:in:"	
+	"Find the context of #run:with:in:"
+	thisContext stack do: [ :e | e traceCr ]. 
+	
 	runWithInContext := thisContext sender.
 	[ runWithInContext isNil 
 		or: [ runWithInContext method isCompiledMethod and: [runWithInContext method selector = #run:with:in:] ] ] 
