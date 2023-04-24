@@ -15,9 +15,14 @@ Class {
 }
 
 { #category : #evaluating }
+MpHandler >> aboutToReturnWithReceiver: receiver arguments: arguments [
+
+	self afterMethod
+]
+
+{ #category : #evaluating }
 MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue [
 
-	self afterMethod.
 	^ aReturnValue
 ]
 
