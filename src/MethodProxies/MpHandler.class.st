@@ -8,9 +8,6 @@ The main API is composed of two methods:
 Class {
 	#name : #MpHandler,
 	#superclass : #Object,
-	#instVars : [
-		'proxy'
-	],
 	#category : #MethodProxies
 }
 
@@ -54,9 +51,4 @@ MpHandler >> captureCallingContext [
 	
 	"Find the real sender"	
 	^ runWithInContext ifNotNil: [ runWithInContext sender ]
-]
-
-{ #category : #evaluating }
-MpHandler >> proxy: aMethodProxy [
-	proxy := aMethodProxy
 ]

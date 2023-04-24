@@ -1,6 +1,6 @@
 Class {
 	#name : #MpMethodProxyDeactivator,
-	#superclass : #Object,
+	#superclass : #MpMethodProxyEnsurer,
 	#pools : [
 		'MpMethodProxyPool'
 	],

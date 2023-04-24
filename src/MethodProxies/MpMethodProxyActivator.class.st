@@ -1,6 +1,6 @@
 Class {
 	#name : #MpMethodProxyActivator,
-	#superclass : #Object,
+	#superclass : #MpMethodProxyEnsurer,
 	#instVars : [
 		'receiver',
 		'arguments',
