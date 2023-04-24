@@ -12,6 +12,12 @@ Class {
 	#category : #'MethodProxies-Tests'
 }
 
+{ #category : #accessing }
+MpClassA >> methodAcceptingABlock: aBlock [
+
+	^ aBlock value
+]
+
 { #category : #debugging }
 MpClassA >> methodDelay [
 
@@ -47,6 +53,12 @@ MpClassA >> methodWithArgument: anInteger [
 MpClassA >> methodWithException [
 
 	1/0
+]
+
+{ #category : #accessing }
+MpClassA >> methodWithNonLocalReturn [
+
+	self methodAcceptingABlock: [ ^ self ]
 ]
 
 { #category : #debugging }
