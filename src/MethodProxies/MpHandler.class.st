@@ -37,3 +37,18 @@ MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 { #category : #evaluating }
 MpHandler >> beforeMethod [
 ]
+
+{ #category : #evaluating }
+MpHandler >> captureCallingContext [
+
+	| runWithInContext |
+	
+	"Find the context of #run:with:in:"	
+	runWithInContext := thisContext sender.
+	[ runWithInContext isNil 
+		or: [ runWithInContext method isCompiledMethod and: [runWithInContext method selector = #run:with:in:] ] ] 
+		whileFalse: [ runWithInContext := runWithInContext sender ].
+	
+	"Find the real sender"	
+	^ runWithInContext ifNotNil: [ runWithInContext sender ]
+]
