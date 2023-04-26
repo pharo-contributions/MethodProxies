@@ -57,6 +57,34 @@ MpMethodProxyTest >> tearDown [
 ]
 
 { #category : #'tests - safety' }
+MpMethodProxyTest >> testCanRunConcurrently [
+	"This tests the ability of method proxies to not influence each other between threads."
+	| mp1 mp2 mpTrigger1 mpTrigger2 handlerTrigger1 handlerTrigger2 sharedObject testSemaphore |
+	
+	sharedObject := MpTestConcurrentSharedObject new.
+	testSemaphore := Semaphore new.
+	
+	mp1 := MpMethodProxy onMethod: (MpTestConcurrentSharedObject lookupSelector: #methodProcess1) handler: (MpWaitBeforeHandler new).
+	mp2 := MpMethodProxy onMethod: (MpTestConcurrentSharedObject lookupSelector: #methodProcess2) handler: (MpWaitAndTriggerBeforeHandler new).
+	mpTrigger1 := MpMethodProxy onMethod: (MpTestConcurrentSharedObject lookupSelector: #trigger1) handler: (handlerTrigger1 := MpAfterCounterHandler new).
+	mpTrigger2 := MpMethodProxy onMethod: (MpTestConcurrentSharedObject lookupSelector: #trigger2) handler: (handlerTrigger2 := MpAfterCounterHandler new).
+	
+	self installMethodProxy: mp1.
+	self installMethodProxy: mp2.
+	self installMethodProxy: mpTrigger1.
+	self installMethodProxy: mpTrigger2.
+	
+	"Here the first process will run an instrumented trigger (trigger1) while the second process is not instrumenting, then the second process will run a non-instrumented trigger while the first process is still instrumenting."
+	[ sharedObject methodProcess1. testSemaphore signal ] fork.
+	[ sharedObject methodProcess2. testSemaphore signal ] fork.
+	testSemaphore wait.
+	
+	"Here the first trigger should have been captured, but not the second. If not concurrency is not correctly managed."
+	self assert: handlerTrigger1 count equals: 1.
+	self assert: handlerTrigger2 count equals: 0
+]
+
+{ #category : #'tests - safety' }
 MpMethodProxyTest >> testCanWrapAboutToReturnThroughWithNonLocalReturn [
 
 	| mp handler |

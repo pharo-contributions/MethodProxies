@@ -1,6 +1,5 @@
 "
 I'm a simple little profiler that can store all the objects returned by the spyied method.
-
 ```
 h := MpAllocationProfilerHandler new.
 p1 := MpMethodProxy 

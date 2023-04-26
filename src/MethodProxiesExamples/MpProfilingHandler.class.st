@@ -1,15 +1,12 @@
 "
 I'm a more advanced proxy that propagates itself during execution.
 When a proxy is executed, before letting the execution runs, it installs itself on all the implementators of the methods used in the method.
-
 ```
 proxy := nil.
 proxies := nil.
 Smalltalk garbageCollect.
-
 testCase := StringTest selector: #testAsCamelCase.
 testMethod := StringTest lookupSelector: testCase selector.
-
 proxy := MpMethodProxy
 				onMethod: testMethod
 				handler: (MpProfilingHandler new
@@ -17,7 +14,6 @@ proxy := MpMethodProxy
 					yourself).
 proxy install.
 testCase run.
-
 proxies := MpMethodProxy allInstances.
 proxies do: #uninstall.
 proxies collect: #handler

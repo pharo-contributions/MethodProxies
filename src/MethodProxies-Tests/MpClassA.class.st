@@ -1,6 +1,5 @@
 "
 Instance Variables:
-
 	x	<Integer>
 "
 Class {

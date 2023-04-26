@@ -1,20 +1,14 @@
 "
 I'm a modern implementation of Python's method decorators or MethodWrappers for Pharo based on `valueWithReceiver:arguments:` VM hook.
-
 Method proxies are objects that wrap methods stored in the method dictionary of the class. 
 Some support before and after action the execution of the original method. 
 Method proxies control their installation and propagation. 
 In particular, they can be applied to any Pharo method. The implementation ensures that the method proxy installation cannot touch any part of the system that could be used to installation.
-
 Method proxies delegate to method handler. This delegation ensures that end user cannot blow up their environment by overridding undesired methods.
-
-
 ## Usage
 Here is a typical usage. Check the tests to know more. 
-
 ```
 testCounts
-
 	| proxy instance handler |
 	[ proxy := MpMethodProxy
 		on: #methodOne
@@ -28,11 +22,7 @@ testCounts
 	instance methodOne.
 	self assert: handler count equals: 2 ] ensure: [ proxy uninstall ]
 ```
-
-
 This package is developed and maintained by S. Ducasse, G. Polito and P. Tesone, but feel free to give a hand. 
-
-
 "
 Class {
 	#name : #MpMethodProxy,
@@ -219,12 +209,12 @@ MpMethodProxy >> run: aSelector with: anArrayOfObjects in: aReceiver [
 	(isDisabled or: [
 		"Check explicitly that the flag has been set.
 		This allows proxies to work independently of initialization side effects."
-		IsActiveInExecutionStack == true ]) ifTrue: [
+		(IsActiveInExecutionStack value) == true ]) ifTrue: [
 			^ self receiver: aReceiver withArgs: anArrayOfObjects executeMethod: proxifiedMethod ].
 	
 	"We are now in the instrumentation world.
 	Do not instrument the instrumentation."
-	IsActiveInExecutionStack := true.
+	IsActiveInExecutionStack value: true.
 	
 	"Purposely do not use a non-local return.
 	Otherwise the non-local return logic would be instrumented once the ensure block is executed.
@@ -262,15 +252,15 @@ MpMethodProxy >> shouldWrap: aMethod [
 MpMethodProxy >> uninstall [
 	
 	| installedMethod |
-	IsActiveInExecutionStack := true.
+	IsActiveInExecutionStack value: true.
 	installedMethod := methodClass compiledMethodAt: selector ifAbsent: [ 
-		IsActiveInExecutionStack := false.
+		IsActiveInExecutionStack value: false.
 		^ self ].
 	installedMethod == self
 		ifTrue: [ methodClass methodDict at: selector put: installedMethod wrappedMethod ].
 
 	self unproxifiedMethod: nil.
-	IsActiveInExecutionStack := false
+	IsActiveInExecutionStack value: false
 ]
 
 { #category : #accessing }
@@ -298,14 +288,14 @@ MpMethodProxy >> valueWithReceiver: receiver arguments: arguments [
 	"Purposely do not use a non-local return.
 	Otherwise the non-local return logic would be instrumented and this could end in infinite loops"
 	[
-	IsActiveInExecutionStack := false.
+	IsActiveInExecutionStack value: false.
 	result := self
 		          receiver: receiver
 		          withArgs: arguments
 		          executeMethod: proxifiedMethod.
 
 	"Eagerly set it to true to avoid instrumenting all messages done during the ensure"
-	IsActiveInExecutionStack := true ] methodProxyEnsure:
+	IsActiveInExecutionStack value: true ] methodProxyEnsure:
 		(MpMethodProxyActivator
 			 newWithHandler: handler
 			 receiver: receiver

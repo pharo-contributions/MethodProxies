@@ -62,7 +62,7 @@ MpMethodProxyActivator >> receiver: anObject [
 MpMethodProxyActivator >> value [
 
 	<methodProxyCannotWrap>
-	IsActiveInExecutionStack := true.
+	IsActiveInExecutionStack value: true.
 	^ handler
 		  aboutToReturnWithReceiver: receiver
 		  arguments: arguments
