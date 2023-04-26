@@ -57,6 +57,33 @@ MpMethodProxyTest >> tearDown [
 ]
 
 { #category : #'tests - safety' }
+MpMethodProxyTest >> testCanRunConcurrently [
+
+	| mp1 mp2 mpTrigger1 mpTrigger2 handlerTrigger1 handlerTrigger2 concurrencyClass testSemaphore |
+	
+	concurrencyClass := MpConcurrencyClass new.
+	concurrencyClass concurrencySemaphore: (Semaphore new).
+	testSemaphore := Semaphore new.
+	
+	mp1 := MpMethodProxy onMethod: (MpConcurrencyClass lookupSelector: #methodProcess1) handler: (MpConcurrencyHandler1 new).
+	mp2 := MpMethodProxy onMethod: (MpConcurrencyClass lookupSelector: #methodProcess2) handler: (MpConcurrencyHandler2 new).
+	mpTrigger1 := MpMethodProxy onMethod: (MpConcurrencyClass lookupSelector: #trigger1) handler: (handlerTrigger1 := MpAfterCounterHandler new).
+	mpTrigger2 := MpMethodProxy onMethod: (MpConcurrencyClass lookupSelector: #trigger2) handler: (handlerTrigger2 := MpAfterCounterHandler new).
+	
+	self installMethodProxy: mp1.
+	self installMethodProxy: mp2.
+	self installMethodProxy: mpTrigger1.
+	self installMethodProxy: mpTrigger2.
+
+	[ concurrencyClass methodProcess1 ] fork.
+	[ concurrencyClass methodProcess2. testSemaphore signal ] fork.
+	testSemaphore wait.
+
+	self assert: handlerTrigger1 count equals: 1.
+	self assert: handlerTrigger2 count equals: 0
+]
+
+{ #category : #'tests - safety' }
 MpMethodProxyTest >> testCanWrapAboutToReturnThroughWithNonLocalReturn [
 
 	| mp handler |
