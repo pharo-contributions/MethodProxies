@@ -1,3 +1,10 @@
+
+"
+I'm the root of hierarchy of objects that can perform computation in place of method such as counting execution...
+The main API is composed of two methods: 
+- `afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue`
+- `beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects`
+"
 Class {
 	#name : #MpHandler,
 	#superclass : #Object,

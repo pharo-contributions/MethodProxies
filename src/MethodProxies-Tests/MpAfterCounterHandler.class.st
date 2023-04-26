@@ -1,3 +1,7 @@
+"
+I am a method proxy handler for testing that increments a counter after the method has been executed.
+I therefore test method exit
+"
 Class {
 	#name : #MpAfterCounterHandler,
 	#superclass : #MpHandler,

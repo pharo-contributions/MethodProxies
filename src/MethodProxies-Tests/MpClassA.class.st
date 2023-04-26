@@ -1,3 +1,7 @@
+"
+Instance Variables:
+	x	<Integer>
+"
 Class {
 	#name : #MpClassA,
 	#superclass : #Object,

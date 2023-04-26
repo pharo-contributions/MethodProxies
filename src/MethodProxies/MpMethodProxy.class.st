@@ -1,3 +1,29 @@
+"
+I'm a modern implementation of Python's method decorators or MethodWrappers for Pharo based on `valueWithReceiver:arguments:` VM hook.
+Method proxies are objects that wrap methods stored in the method dictionary of the class. 
+Some support before and after action the execution of the original method. 
+Method proxies control their installation and propagation. 
+In particular, they can be applied to any Pharo method. The implementation ensures that the method proxy installation cannot touch any part of the system that could be used to installation.
+Method proxies delegate to method handler. This delegation ensures that end user cannot blow up their environment by overridding undesired methods.
+## Usage
+Here is a typical usage. Check the tests to know more. 
+```
+testCounts
+	| proxy instance handler |
+	[ proxy := MpMethodProxy
+		on: #methodOne
+		inClass: MpClassA
+		handler: (handler := MwCountingHandler new).
+	proxy install.
+	instance := MpClassA new.
+	self assert: handler count equals: 0.
+	instance methodOne.
+	self assert: handler count equals: 1.
+	instance methodOne.
+	self assert: handler count equals: 2 ] ensure: [ proxy uninstall ]
+```
+This package is developed and maintained by S. Ducasse, G. Polito and P. Tesone, but feel free to give a hand. 
+"
 Class {
 	#name : #MpMethodProxy,
 	#superclass : #Object,

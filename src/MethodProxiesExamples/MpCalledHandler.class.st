@@ -1,3 +1,6 @@
+"
+I'm a little example that reports if the spyied method has been executed. 
+"
 Class {
 	#name : #MpCalledHandler,
 	#superclass : #MpHandler,
