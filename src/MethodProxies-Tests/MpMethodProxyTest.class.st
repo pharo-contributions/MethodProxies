@@ -110,7 +110,7 @@ MpMethodProxyTest >> testCanWrapEnsureWithException [
 
 { #category : #'tests - safety' }
 MpMethodProxyTest >> testCanWrapValue [
-
+	<compilerOptions: #(- optionConstantBlockClosure)>
 	| mp handler |
 	mp := MpMethodProxy onMethod: (FullBlockClosure lookupSelector: #value) handler: (handler := MpCountingHandler new).
 	
