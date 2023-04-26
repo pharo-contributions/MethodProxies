@@ -226,15 +226,15 @@ MpMethodProxy >> shouldWrap: aMethod [
 MpMethodProxy >> uninstall [
 	
 	| installedMethod |
-	IsActiveInExecutionStack := true.
+	IsActiveInExecutionStack value: true.
 	installedMethod := methodClass compiledMethodAt: selector ifAbsent: [ 
-		IsActiveInExecutionStack := false.
+		IsActiveInExecutionStack value: false.
 		^ self ].
 	installedMethod == self
 		ifTrue: [ methodClass methodDict at: selector put: installedMethod wrappedMethod ].
 
 	self unproxifiedMethod: nil.
-	IsActiveInExecutionStack := false
+	IsActiveInExecutionStack value: false
 ]
 
 { #category : #accessing }
