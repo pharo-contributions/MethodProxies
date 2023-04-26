@@ -1,6 +1,3 @@
-"
-I'm counting the number of times I'm executed. 
-"
 Class {
 	#name : #MpCountingHandler,
 	#superclass : #MpHandler,

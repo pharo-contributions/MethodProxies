@@ -11,5 +11,5 @@ Class {
 MpMethodProxyDeactivator >> value [
 
 	<methodProxyCannotWrap>
-	IsActiveInExecutionStack := false
+	IsActiveInExecutionStack value: false
 ]
