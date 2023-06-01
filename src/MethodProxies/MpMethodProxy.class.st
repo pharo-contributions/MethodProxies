@@ -287,10 +287,10 @@ MpMethodProxy >> valueWithReceiver: receiver arguments: arguments [
 			 receiver: receiver
 			 arguments: arguments).
 
-	^ handler
+	thisProcess runInMetaLevel: [^ handler
 		  afterExecutionWithReceiver: receiver
 		  arguments: arguments
-		  returnValue: result
+		  returnValue: result]
 ]
 
 { #category : #accessing }
