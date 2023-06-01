@@ -34,9 +34,6 @@ Class {
 		'handler',
 		'proxifiedMethod'
 	],
-	#pools : [
-		'MpMethodProxyPool'
-	],
 	#category : #MethodProxies
 }
 
@@ -201,27 +198,19 @@ MpMethodProxy >> receiver: aReceiver withArgs: argArray executeMethod: compiledM
 
 { #category : #evaluating }
 MpMethodProxy >> run: aSelector with: anArrayOfObjects in: aReceiver [
-
 	"Do not intercept"
+
 	<methodProxyCannotWrap>
-	
-	| returnValue |
-	(isDisabled or: [
-		"Check explicitly that the flag has been set.
-		This allows proxies to work independently of initialization side effects."
-		(IsActiveInExecutionStack value) == true ]) ifTrue: [
-			^ self receiver: aReceiver withArgs: anArrayOfObjects executeMethod: proxifiedMethod ].
-	
-	"We are now in the instrumentation world.
-	Do not instrument the instrumentation."
-	IsActiveInExecutionStack value: true.
-	
+	(isDisabled or: [ thisProcess isMeta ]) ifTrue: [
+		^ self
+			  receiver: aReceiver
+			  withArgs: anArrayOfObjects
+			  executeMethod: proxifiedMethod ].
+
 	"Purposely do not use a non-local return.
 	Otherwise the non-local return logic would be instrumented once the ensure block is executed.
 	However, since a lot of code executes between the ensure block and the real method return, this could end in infinite loops"
-	[returnValue := self valueWithReceiver: aReceiver arguments: anArrayOfObjects ]
-		ensure: MpMethodProxyDeactivator new.
-	^ returnValue
+	^ self valueWithReceiver: aReceiver arguments: anArrayOfObjects
 ]
 
 { #category : #accessing }
@@ -250,17 +239,17 @@ MpMethodProxy >> shouldWrap: aMethod [
 
 { #category : #installation }
 MpMethodProxy >> uninstall [
-	
-	| installedMethod |
-	IsActiveInExecutionStack value: true.
-	installedMethod := methodClass compiledMethodAt: selector ifAbsent: [ 
-		IsActiveInExecutionStack value: false.
-		^ self ].
-	installedMethod == self
-		ifTrue: [ methodClass methodDict at: selector put: installedMethod wrappedMethod ].
 
-	self unproxifiedMethod: nil.
-	IsActiveInExecutionStack value: false
+	| installedMethod |
+	thisProcess runInMetaLevel: [
+		installedMethod := methodClass
+			                   compiledMethodAt: selector
+			                   ifAbsent: [ ^ self ].
+		installedMethod == self ifTrue: [
+			methodClass methodDict
+				at: selector
+				put: installedMethod wrappedMethod ].
+		self unproxifiedMethod: nil ]
 ]
 
 { #category : #accessing }
@@ -283,26 +272,21 @@ MpMethodProxy >> valueWithReceiver: receiver arguments: arguments [
 	| result |
 	"Hooking into user methods to define before actions.
 	Before actions are not instrumented."
-	handler beforeExecutionWithReceiver: receiver arguments: arguments.
+	thisProcess runInMetaLevel: [
+		handler beforeExecutionWithReceiver: receiver arguments: arguments ].
 
 	"Purposely do not use a non-local return.
 	Otherwise the non-local return logic would be instrumented and this could end in infinite loops"
 	[
-	IsActiveInExecutionStack value: false.
 	result := self
 		          receiver: receiver
 		          withArgs: arguments
-		          executeMethod: proxifiedMethod.
-
-	"Eagerly set it to true to avoid instrumenting all messages done during the ensure"
-	IsActiveInExecutionStack value: true ] methodProxyEnsure:
-		(MpMethodProxyActivator
+		          executeMethod: proxifiedMethod ] methodProxyEnsure:
+		(MpInstrumentationUnwinder
 			 newWithHandler: handler
 			 receiver: receiver
 			 arguments: arguments).
 
-	"Hooking into user methods to define after actions.
-	After actions are not instrumented."
 	^ handler
 		  afterExecutionWithReceiver: receiver
 		  arguments: arguments

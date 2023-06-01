@@ -1,4 +1,3 @@
-
 "
 I'm the root of hierarchy of objects that can perform computation in place of method such as counting execution...
 The main API is composed of two methods: 
