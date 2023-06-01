@@ -227,14 +227,15 @@ MpMethodProxy >> selector: aSymbol [
 
 { #category : #installation }
 MpMethodProxy >> shouldWrap: aMethod [
-	
+
 	(aMethod isCompiledMethod not and: [
-		aMethod handler class ~~ self handler class ])
-			ifTrue: [ ^ true ].
-	
+		 aMethod handler class ~~ self handler class ]) ifTrue: [ ^ true ].
+
 	aMethod isCompiledMethod ifFalse: [ ^ false ].
-	
-	^ aMethod pragmas noneSatisfy: [ :pragma | pragma selector = #methodProxyCannotWrap ]
+
+	^ aMethod pragmas noneSatisfy: [ :pragma |
+		  pragma selector = #methodProxyCannotWrap or: [
+			  pragma selector = #noInstrumentation ] ]
 ]
 
 { #category : #installation }

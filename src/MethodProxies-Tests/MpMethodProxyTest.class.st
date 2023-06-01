@@ -98,6 +98,19 @@ MpMethodProxyTest >> testCanWrapAboutToReturnThroughWithNonLocalReturn [
 ]
 
 { #category : #'tests - safety' }
+MpMethodProxyTest >> testCanWrapBasicNew [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: Behavior >> #basicNew handler: (handler := MpCountingHandler new).
+	
+	self installMethodProxy: mp.
+
+	MpClassA new.
+
+	self assert: handler count equals: 1
+]
+
+{ #category : #'tests - safety' }
 MpMethodProxyTest >> testCanWrapEnsure [
 
 	| mp handler |
