@@ -98,6 +98,19 @@ MpMethodProxyTest >> testCanWrapAboutToReturnThroughWithNonLocalReturn [
 ]
 
 { #category : #'tests - safety' }
+MpMethodProxyTest >> testCanWrapBasicNew [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: Behavior >> #basicNew handler: (handler := MpCountingHandler new).
+	
+	self installMethodProxy: mp.
+
+	MpClassA new.
+
+	self assert: handler count equals: 1
+]
+
+{ #category : #'tests - safety' }
 MpMethodProxyTest >> testCanWrapEnsure [
 
 	| mp handler |
@@ -211,7 +224,7 @@ MpMethodProxyTest >> testCannotWrapCriticalProxyMethods4 [
 MpMethodProxyTest >> testCannotWrapCriticalProxyMethods5 [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: MpMethodProxyActivator >> #value handler: (handler := MpCountingHandler new).
+	mp := MpMethodProxy onMethod: MpInstrumentationUnwinder >> #value handler: (handler := MpCountingHandler new).
 	
 	self assertCannotInstall: mp
 ]
@@ -220,16 +233,7 @@ MpMethodProxyTest >> testCannotWrapCriticalProxyMethods5 [
 MpMethodProxyTest >> testCannotWrapCriticalProxyMethods6 [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: MpMethodProxyDeactivator >> #value handler: (handler := MpCountingHandler new).
-	
-	self assertCannotInstall: mp
-]
-
-{ #category : #'tests - safety' }
-MpMethodProxyTest >> testCannotWrapCriticalProxyMethods7 [
-
-	| mp handler |
-	mp := MpMethodProxy onMethod: MpMethodProxyPool class >> #protect handler: (handler := MpCountingHandler new).
+	mp := MpMethodProxy onMethod: InstrumentationDeactivator >> #value handler: (handler := MpCountingHandler new).
 	
 	self assertCannotInstall: mp
 ]

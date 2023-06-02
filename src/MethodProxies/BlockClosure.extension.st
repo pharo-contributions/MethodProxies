@@ -11,7 +11,6 @@ BlockClosure >> methodProxyEnsure: aBlock [
 	<primitive: 198>
 	<methodProxyCannotWrap>
 	returnValue := self valueNoContextSwitch.
-	MpMethodProxyPool protect.
 	complete ifNil:[
 		complete := true.
 		aBlock value.
