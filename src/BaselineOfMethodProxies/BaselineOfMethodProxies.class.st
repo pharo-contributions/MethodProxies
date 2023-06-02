@@ -9,12 +9,7 @@ BaselineOfMethodProxies >> baseline: spec [
 
 	<baseline>
 	spec for: #common do: [
-		spec
-			baseline: #Instrumentation
-			with: [ spec
-                repository: 'github://pharo-project/pharo' ];
-			package: #MethodProxies
-			with: [ spec requires: #( #Instrumentation ) ];
+			spec package: #MethodProxies;
 			package: #'MethodProxies-Tests'
 			with: [ spec requires: #( #MethodProxies ) ];
 			package: #MethodProxiesExamples
