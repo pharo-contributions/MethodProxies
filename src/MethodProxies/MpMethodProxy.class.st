@@ -26,7 +26,7 @@ This package is developed and maintained by S. Ducasse, G. Polito and P. Tesone,
 "
 Class {
 	#name : #MpMethodProxy,
-	#superclass : #Object,
+	#superclass : #ProtoObject,
 	#instVars : [
 		'selector',
 		'methodClass',
