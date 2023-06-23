@@ -26,7 +26,7 @@ This package is developed and maintained by S. Ducasse, G. Polito and P. Tesone,
 "
 Class {
 	#name : #MpMethodProxy,
-	#superclass : #Object,
+	#superclass : #ProtoObject,
 	#instVars : [
 		'selector',
 		'methodClass',
@@ -58,6 +58,15 @@ MpMethodProxy class >> uninstallAllWrappers [
 	"self uninstallAllWrappers"
 
 	self allSubInstancesDo: [ :inst | inst uninstall ]
+]
+
+{ #category : #comparing }
+MpMethodProxy >> = anObject [
+	"Answer whether the receiver and the argument represent the same
+	object. If = is redefined in any subclass, consider also redefining the
+	message hash."
+
+	^ self == anObject
 ]
 
 { #category : #initialization }
