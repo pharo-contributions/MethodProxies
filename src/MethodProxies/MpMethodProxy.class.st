@@ -26,7 +26,7 @@ This package is developed and maintained by S. Ducasse, G. Polito and P. Tesone,
 "
 Class {
 	#name : #MpMethodProxy,
-	#superclass : #ProtoObject,
+	#superclass : #Object,
 	#instVars : [
 		'selector',
 		'methodClass',
@@ -36,6 +36,14 @@ Class {
 	],
 	#category : #MethodProxies
 }
+
+{ #category : #'reflective operations' }
+MpMethodProxy class >> doesNotUnderstand: aMessage [
+
+	^ CompiledMethod 
+		  perform: aMessage selector
+		  withArguments: aMessage arguments
+]
 
 { #category : #'instance creation' }
 MpMethodProxy class >> on: selector inClass: aClass handler: aHandler [
@@ -67,6 +75,14 @@ MpMethodProxy >> = anObject [
 	message hash."
 
 	^ self == anObject
+]
+
+{ #category : #accessing }
+MpMethodProxy >> calypsoEnvironmentType [
+	^ proxifiedMethod 
+			ifNotNil: [ proxifiedMethod calypsoEnvironmentType ]
+			ifNil: [ super calypsoEnvironmentType ]
+			
 ]
 
 { #category : #initialization }
