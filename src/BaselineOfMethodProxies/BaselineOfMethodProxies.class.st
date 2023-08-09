@@ -22,5 +22,10 @@ BaselineOfMethodProxies >> baseline: spec [
 			group: 'All'
 			with:
 				#( #MethodProxies #'MethodProxies-Tests' #MethodProxiesExamples
-				   #'MethodProxiesExamples-Tests' ) ]
+				   #'MethodProxiesExamples-Tests' ) ].
+	spec for: #'pharo11.x' do: [ 
+		spec package: #Instrumentation.
+		spec
+			package: #MethodProxies
+			with: [ spec requires: #( Instrumentation ) ] ]
 ]
