@@ -226,7 +226,7 @@ MpMethodProxy >> run: aSelector with: anArrayOfObjects in: aReceiver [
 	"Do not intercept"
 
 	<methodProxyCannotWrap>
-	(isDisabled or: [ thisProcess isMeta ]) ifTrue: [
+	(isDisabled or: [ Processor activeProcess isMeta ]) ifTrue: [
 		^ self
 			  receiver: aReceiver
 			  withArgs: anArrayOfObjects
@@ -267,7 +267,7 @@ MpMethodProxy >> shouldWrap: aMethod [
 MpMethodProxy >> uninstall [
 
 	| installedMethod |
-	thisProcess runInMetaLevel: [
+	Processor activeProcess runInMetaLevel: [
 		installedMethod := methodClass
 			                   compiledMethodAt: selector
 			                   ifAbsent: [ ^ self ].
@@ -298,7 +298,7 @@ MpMethodProxy >> valueWithReceiver: receiver arguments: arguments [
 	| result |
 	"Hooking into user methods to define before actions.
 	Before actions are not instrumented."
-	thisProcess runInMetaLevel: [
+	Processor activeProcess runInMetaLevel: [
 		handler beforeExecutionWithReceiver: receiver arguments: arguments ].
 
 	"Purposely do not use a non-local return.
@@ -313,7 +313,7 @@ MpMethodProxy >> valueWithReceiver: receiver arguments: arguments [
 			 receiver: receiver
 			 arguments: arguments).
 
-	thisProcess runInMetaLevel: [^ handler
+	Processor activeProcess runInMetaLevel: [^ handler
 		  afterExecutionWithReceiver: receiver
 		  arguments: arguments
 		  returnValue: result]

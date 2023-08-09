@@ -59,6 +59,6 @@ MpInstrumentationUnwinder >> receiver: anObject [
 MpInstrumentationUnwinder >> value [
 
 	<methodProxyCannotWrap>
-	thisProcess runInMetaLevel: [
+	Processor activeProcess runInMetaLevel: [
 		^ handler aboutToReturnWithReceiver: receiver arguments: arguments ]
 ]

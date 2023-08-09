@@ -8,5 +8,5 @@ Class {
 InstrumentationDeactivator >> value [
 
 	<noInstrumentation>
-	thisProcess shiftLevelDown
+	Processor activeProcess shiftLevelDown
 ]
