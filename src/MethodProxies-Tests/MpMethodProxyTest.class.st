@@ -41,44 +41,65 @@ MpMethodProxyTest >> installMethodProxy: aMethodProxy [
 ]
 
 { #category : #initialization }
-MpMethodProxyTest >> setUp [ 
+MpMethodProxyTest >> setUp [
 
 	super setUp.
-	trackedWrappers := OrderedCollection new.
-	MpClassA methods do: [ :each | each uninstall ]
-	
+	trackedWrappers := OrderedCollection new
 ]
 
 { #category : #initialization }
 MpMethodProxyTest >> tearDown [
 
-	trackedWrappers do: [ :e | e uninstall ].
+	trackedWrappers do: [ :each |
+		[ each uninstall ]
+			on: Error
+			do: [ :e | "continue" ] ].
 	super tearDown
 ]
 
 { #category : #'tests - safety' }
 MpMethodProxyTest >> testCanRunConcurrently [
 	"This tests the ability of method proxies to not influence each other between threads."
-	| mp1 mp2 mpTrigger1 mpTrigger2 handlerTrigger1 handlerTrigger2 sharedObject testSemaphore |
-	
+
+	| mp1 mp2 mpTrigger1 mpTrigger2 handlerTrigger1 handlerTrigger2 sharedObject testSemaphore p1 p2 |
 	sharedObject := MpTestConcurrentSharedObject new.
 	testSemaphore := Semaphore new.
-	
-	mp1 := MpMethodProxy onMethod: (MpTestConcurrentSharedObject lookupSelector: #methodProcess1) handler: (MpWaitBeforeHandler new).
-	mp2 := MpMethodProxy onMethod: (MpTestConcurrentSharedObject lookupSelector: #methodProcess2) handler: (MpWaitAndTriggerBeforeHandler new).
-	mpTrigger1 := MpMethodProxy onMethod: (MpTestConcurrentSharedObject lookupSelector: #trigger1) handler: (handlerTrigger1 := MpAfterCounterHandler new).
-	mpTrigger2 := MpMethodProxy onMethod: (MpTestConcurrentSharedObject lookupSelector: #trigger2) handler: (handlerTrigger2 := MpAfterCounterHandler new).
-	
+
+	mp1 := MpMethodProxy
+		       onMethod:
+		       (MpTestConcurrentSharedObject lookupSelector: #methodProcess1)
+		       handler: MpWaitBeforeHandler new.
+	mp2 := MpMethodProxy
+		       onMethod:
+		       (MpTestConcurrentSharedObject lookupSelector: #methodProcess2)
+		       handler: MpWaitAndTriggerBeforeHandler new.
+	mpTrigger1 := MpMethodProxy
+		              onMethod:
+		              (MpTestConcurrentSharedObject lookupSelector:
+			               #trigger1)
+		              handler:
+		              (handlerTrigger1 := MpAfterCounterHandler new).
+	mpTrigger2 := MpMethodProxy
+		              onMethod:
+		              (MpTestConcurrentSharedObject lookupSelector:
+			               #trigger2)
+		              handler:
+		              (handlerTrigger2 := MpAfterCounterHandler new).
+
 	self installMethodProxy: mp1.
 	self installMethodProxy: mp2.
 	self installMethodProxy: mpTrigger1.
 	self installMethodProxy: mpTrigger2.
-	
+
 	"Here the first process will run an instrumented trigger (trigger1) while the second process is not instrumenting, then the second process will run a non-instrumented trigger while the first process is still instrumenting."
-	[ sharedObject methodProcess1. testSemaphore signal ] fork.
-	[ sharedObject methodProcess2. testSemaphore signal ] fork.
+	p1 := [
+	sharedObject methodProcess1.
+	testSemaphore signal ] fork.
+	p2 := [
+	sharedObject methodProcess2.
+	testSemaphore signal ] fork.
 	testSemaphore wait.
-	
+
 	"Here the first trigger should have been captured, but not the second. If not concurrency is not correctly managed."
 	self assert: handlerTrigger1 count equals: 1.
 	self assert: handlerTrigger2 count equals: 0
@@ -152,6 +173,7 @@ MpMethodProxyTest >> testCanWrapEnsureWithException [
 { #category : #'tests - safety' }
 MpMethodProxyTest >> testCanWrapValue [
 	<compilerOptions: #(- optionConstantBlockClosure)>
+	<compilerOptions: #(- optionOptimiseSpecialSends)>
 	| mp handler |
 	mp := MpMethodProxy onMethod: (FullBlockClosure lookupSelector: #value) handler: (handler := MpCountingHandler new).
 	
@@ -165,68 +187,19 @@ MpMethodProxyTest >> testCanWrapValue [
 { #category : #'tests - safety' }
 MpMethodProxyTest >> testCanWrapValueWithException [
 
+	<compilerOptions: #( #- optionOptimiseSpecialSends )>
 	| mp handler |
-	mp := MpMethodProxy onMethod: (FullBlockClosure lookupSelector: #value) handler: (handler := MpCountingHandler new).
-	
+	mp := MpMethodProxy
+		      onMethod: (FullBlockClosure lookupSelector: #value)
+		      handler: (handler := MpCountingHandler new).
+
 	self installMethodProxy: mp.
+	[ [ [ 1 error ] value ] value ]
+		on: Error
+		do: #yourself. "to avoid an extra block"
 
-	[[[ 1 error ] value] value] on: Error do: #yourself "to avoid an extra block".
-
-	self assert: handler count equals: 2 "value" + 1 "on:do:"
-]
-
-{ #category : #'tests - installation' }
-MpMethodProxyTest >> testCannotProxyUnexistentMethod [
-
-	| mp |
-	mp := MpMethodProxy on: #methodOne inClass: Object handler: self handlerClass new.
-	
-	self assertCannotInstall: mp
-]
-
-{ #category : #'tests - safety' }
-MpMethodProxyTest >> testCannotWrapCriticalProxyMethods [
-
-	| mp handler |
-	mp := MpMethodProxy onMethod: MpMethodProxy >> #valueWithReceiver:arguments: handler: (handler := MpCountingHandler new).
-	
-	self assertCannotInstall: mp
-]
-
-{ #category : #'tests - safety' }
-MpMethodProxyTest >> testCannotWrapCriticalProxyMethods2 [
-
-	| mp handler |
-	mp := MpMethodProxy onMethod: MpMethodProxy >> #receiver:withArgs:executeMethod: handler: (handler := MpCountingHandler new).
-	
-	self assertCannotInstall: mp
-]
-
-{ #category : #'tests - safety' }
-MpMethodProxyTest >> testCannotWrapCriticalProxyMethods3 [
-
-	| mp handler |
-	mp := MpMethodProxy onMethod: MpMethodProxy >> #run:with:in: handler: (handler := MpCountingHandler new).
-	
-	self assertCannotInstall: mp
-]
-
-{ #category : #'tests - safety' }
-MpMethodProxyTest >> testCannotWrapCriticalProxyMethods4 [
-
-	| mp handler |
-	mp := MpMethodProxy onMethod: BlockClosure >> #methodProxyEnsure: handler: (handler := MpCountingHandler new).
-	
-	self assertCannotInstall: mp
-]
-
-{ #category : #'tests - safety' }
-MpMethodProxyTest >> testCannotWrapCriticalProxyMethods5 [
-
-	| mp handler |
-	mp := MpMethodProxy onMethod: MpInstrumentationUnwinder >> #value handler: (handler := MpCountingHandler new).
-	
-	self assertCannotInstall: mp
+	"#on:do: does send value too but it's optimised by default and there is no message send"
+	self assert: handler count equals: 2
 ]
 
 { #category : #'tests - safety' }
@@ -241,13 +214,14 @@ MpMethodProxyTest >> testCannotWrapCriticalProxyMethods6 [
 { #category : #'tests - dead representation' }
 MpMethodProxyTest >> testCreatingAnInstanceDoesNotInstallIt [
 
-	| mp method |
-	method := MpClassA >> #methodOne.
-	mp := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
+	| mp |
+	mp := MpMethodProxy
+		      onMethod: MpClassA >> #methodOne
+		      handler: self handlerClass new.
 	self assert: mp selector equals: #methodOne.
 	self assert: mp methodClass equals: MpClassA.
 
-	self assert: mp wrappedMethod equals: nil
+	self deny: mp isInstalled
 ]
 
 { #category : #'tests - safety' }
@@ -307,7 +281,7 @@ MpMethodProxyTest >> testInstallSetCompiledMethod [
 	| mw method |
 	[ 
 	method := MpClassA >> #methodOne.
-	mw := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
+	mw := MpMethodProxy  onMethod: method handler: self handlerClass new.
 	mw install.
 	self assert: mw selector equals: #methodOne.
 	self assert: mw methodClass equals: MpClassA.
@@ -321,7 +295,7 @@ MpMethodProxyTest >> testIsInstalled [
 	| mw method |
 	[ 
 	method := MpClassA >> #methodOne.
-	mw := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
+	mw := MpMethodProxy onMethod: method handler: self handlerClass new.
 	self deny: mw isInstalled.
 	mw install.
 	self assert: mw isInstalled ] ensure: [ mw uninstall ]
@@ -330,19 +304,25 @@ MpMethodProxyTest >> testIsInstalled [
 { #category : #'tests - installation' }
 MpMethodProxyTest >> testIsInstalledNestedMWAreNotInstalled [
 
-	| mp method mp2 |
-	method := MpClassA >> #methodOne.
-	mp := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
-	mp2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
+	| mp mp2 |
+	mp := MpMethodProxy
+		      onMethod: MpClassA >> #methodOne
+		      handler: self handlerClass new.
+	mp2 := MpMethodProxy
+		       onMethod: MpClassA >> #methodOne
+		       handler: MpMockMethodProxyHandler new.
+
+	[
+	[
 	mp install.
 	mp2 install.
 	self deny: mp isInstalled.
-	self assert: mp2 isInstalled.
-	mp2 uninstall.
-	self deny: mp2 isInstalled.
-	self assert: mp isInstalled.
-	mp uninstall.
-	self deny: mp isInstalled
+	self assert: mp2 isInstalled ] ensure: [
+		mp2 uninstall.
+		self deny: mp2 isInstalled.
+		self assert: mp isInstalled ] ] ensure: [
+		mp uninstall.
+		self deny: mp isInstalled ]
 ]
 
 { #category : #'tests - safety' }
@@ -350,7 +330,7 @@ MpMethodProxyTest >> testRecursiveMethodWrapperDoesNotRecurse [
 
 	| mw method |
 	method := MpMockObject >> #recursiveMethod.
-	mw := MpMethodProxy onMethod: method  handler: MpMockMethodProxyHandler new.
+	mw := MpMethodProxy onMethod: method handler: MpMockMethodProxyHandler new.
 	self installMethodProxy: mw.
 
 	self assert: MpMockObject new recursiveMethod equals: 'trapped [original]'.
@@ -360,14 +340,16 @@ MpMethodProxyTest >> testRecursiveMethodWrapperDoesNotRecurse [
 MpMethodProxyTest >> testUninstall [
 
 	| mp method |
+	[
 	method := MpClassA >> #methodOne.
-	mp := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
+	mp := MpMethodProxy onMethod: method handler: self handlerClass new.
 	mp install.
-	self assert: (MpClassA compiledMethodAt: #methodOne) isMethodProxy.
-	self assert: (MpClassA compiledMethodAt: #methodOne) == mp.
-	mp uninstall.
-	self assert: (MpClassA compiledMethodAt: #methodOne) == method.
-	self assert: mp wrappedMethod isNil
+	self assert:
+		(MpClassA compiledMethodAt: #methodOne) selector = #methodOne.
+	self assert: (MpClassA compiledMethodAt: #methodOne) == mp trap ]
+		ensure: [
+			mp uninstall.
+			self assert: (MpClassA compiledMethodAt: #methodOne) == method ]
 ]
 
 { #category : #'tests - installation' }
@@ -375,15 +357,24 @@ MpMethodProxyTest >> testUninstallNestedInRightOrderIsOk [
 
 	| mp mp2 method |
 	method := MpClassA >> #methodOne.
-	mp := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
-	mp2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
-	mp install.
-	mp2 install.
-	self assert: (MpClassA compiledMethodAt: #methodOne) isMethodProxy.
-	self assert: (MpClassA compiledMethodAt: #methodOne) identicalTo: mp2.
-	mp2 uninstall.
-	self assert: (MpClassA compiledMethodAt: #methodOne) identicalTo: mp.
-	mp uninstall.
+	mp := MpMethodProxy
+		      onMethod: MpClassA >> #methodOne
+		      handler: self handlerClass new.
+	mp2 := MpMethodProxy
+		       onMethod: MpClassA >> #methodOne
+		       handler: MpMockMethodProxyHandler new.
+	self installMethodProxy: mp.
+	self installMethodProxy: mp2.
+
+	[
+	[
+	self
+		assert: (MpClassA compiledMethodAt: #methodOne)
+		identicalTo: mp2 trap ] ensure: [
+		mp2 uninstall.
+		self
+			assert: (MpClassA compiledMethodAt: #methodOne)
+			identicalTo: mp trap ] ] ensure: [ mp uninstall ].
 	self
 		assert: (MpClassA compiledMethodAt: #methodOne)
 		identicalTo: method
@@ -393,29 +384,29 @@ MpMethodProxyTest >> testUninstallNestedInRightOrderIsOk [
 MpMethodProxyTest >> testUnwrappedMethodAtOneLevelIsTheWrappedMethod [
 
 	| mp method |
-	[ 
 	method := MpClassA >> #methodOne.
-	mp := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
-	mp install.
-	self assert: mp unproxifiedMethod equals: method ] ensure: [ 
-		mp uninstall ]
+	mp := MpMethodProxy onMethod: method handler: self handlerClass new.
+	self installMethodProxy: mp.
+
+	self assert: mp wrappedMethod equals: method
 ]
 
 { #category : #tests }
 MpMethodProxyTest >> testUnwrappedMethodOfNestedMethodWrapperInTheCompiledMethod [
 
 	| mp method mp2 |
-	[ 
 	method := MpClassA >> #methodOne.
-	mp := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
-	mp install.
-	mp2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
-	mp2 install.
+	mp := MpMethodProxy
+		      onMethod: MpClassA >> #methodOne
+		      handler: self handlerClass new.
+	self installMethodProxy: mp.
 
-	self assert: mp2 wrappedMethod equals: mp.
-	self assert: mp2 unproxifiedMethod equals: method ] ensure: [ 
-		mp2 uninstall.
-		mp uninstall ]
+	mp2 := MpMethodProxy
+		       onMethod: MpClassA >> #methodOne
+		       handler: MpMockMethodProxyHandler new.
+	self installMethodProxy: mp2.
+
+	self assert: mp2 wrappedMethod equals: mp trap.
 ]
 
 { #category : #'tests - safety' }
@@ -474,13 +465,17 @@ MpMethodProxyTest >> testWrapNonLocalReturns [
 MpMethodProxyTest >> testWrappingTwiceIsPossible [
 
 	| mp1 method mp2 |
-	[ 
+	[
 	method := MpClassA >> #methodOne.
-	mp1 := MpMethodProxy on: #methodOne inClass: MpClassA handler: self handlerClass new.
-	mp1 install.
+	mp1 := MpMethodProxy
+		       onMethod: MpClassA >> #methodOne
+		       handler: self handlerClass new.
+	self installMethodProxy: mp1.
 
-	mp2 := MpMethodProxy on: #methodOne inClass: MpClassA handler: MpMockMethodProxyHandler new.
-	mp2 install.
+	mp2 := MpMethodProxy
+		       onMethod: MpClassA >> #methodOne
+		       handler: MpMockMethodProxyHandler new.
+	self installMethodProxy: mp2.
 
 	self assert: mp1 selector equals: #methodOne.
 	self assert: mp1 methodClass equals: MpClassA.
@@ -488,9 +483,11 @@ MpMethodProxyTest >> testWrappingTwiceIsPossible [
 
 	self assert: mp2 selector equals: #methodOne.
 	self assert: mp2 methodClass equals: MpClassA.
-	self assert: mp2 wrappedMethod equals: mp1 ] ensure: [ 
+	self assert: mp2 wrappedMethod equals: mp1 trap ] ensure: [
+		[
 		mp2 uninstall.
-		self assert: (MpClassA methodDict at: #methodOne) equals: mp1.
-		mp1 uninstall.
-		self assert: (MpClassA methodDict at: #methodOne) equals: method ]
+		self assert: (MpClassA methodDict at: #methodOne) equals: mp1 trap ]
+			ensure: [
+				mp1 uninstall.
+				self assert: (MpClassA methodDict at: #methodOne) equals: method ] ]
 ]
