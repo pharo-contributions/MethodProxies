@@ -36,19 +36,24 @@ MpAllocationProfilerHandler >> afterExecutionWithReceiver: receiver arguments: a
 	^ returnValue
 ]
 
-{ #category : #initialization }
-MpAllocationProfilerHandler >> afterExecutionWithReceiver: receiver arguments: arguments returnValue: returnValue callerContext: callerContext [
-
-	| allocationsPerClass transformedContext |
-	transformedContext := self transformContext: callerContext. 
-	allocationsPerClass := allocations at: receiver ifAbsentPut: [ OrderedCollection new ].
-	allocationsPerClass add: {returnValue. transformedContext}.
-	^ returnValue
-]
-
 { #category : #accessing }
 MpAllocationProfilerHandler >> allocations [
 	^ allocations
+]
+
+{ #category : #evaluating }
+MpAllocationProfilerHandler >> captureCallingContext [
+
+	| runWithInContext |
+	
+	"Find the context of #run:with:in:"	
+	runWithInContext := thisContext sender.
+	[ runWithInContext isNil 
+		or: [ runWithInContext method isCompiledMethod and: [runWithInContext method selector = #run:with:in:] ] ] 
+		whileFalse: [ runWithInContext := runWithInContext sender ].
+	
+	"Find the real sender"	
+	^ runWithInContext ifNotNil: [ runWithInContext sender ]
 ]
 
 { #category : #accessing }

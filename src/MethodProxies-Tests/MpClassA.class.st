@@ -32,8 +32,8 @@ MpClassA >> methodLastingOneSecond [
 
 { #category : #debugging }
 MpClassA >> methodOne [
+
 	^ 101
-	
 ]
 
 { #category : #debugging }

@@ -1,8 +1,16 @@
 "
-I'm the root of hierarchy of objects that can perform computation in place of method such as counting execution...
-The main API is composed of two methods: 
-- `afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue`
-- `beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects`
+I'm the responsible of executing some instrumentation for a method proxy.
+I implement the main hooks that are called when a method is executed or returns.
+By default, I do nothing. Override my hooks to perform some action before/after.
+
+The main API is composed of three methods: 
+- `beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects`: called before the wrapped method gets invoked. It receives as argument the actual receiver and arguments of the trapped message send.
+- `aboutToReturnWithReceiver: anObject arguments: arguments`: called before the wrapped method exits because of a stack unwind that *passes through* this method. This happens in the case of non-local returns and exceptions.
+- `afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue`: called before the wraped method exists on a normal return with a return value. This hook allows doing something after normal execution happened, act on the return value, and change the return values of methods. The return value of the trapped call is sent as argument. The proxy will return the value returned by this method.
+
+Moreover, for cases when this is not required, two higher-level hooks are proposed in and defined in terms of the ones above.
+- `beforeMethod`: called before the method gets invoked. Just a simpler version of `beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects`.
+- `afterMethod`: called before the method returns, either by normal or abnormal execution. It does not allow any action on the return value.
 "
 Class {
 	#name : #MpHandler,
@@ -19,6 +27,7 @@ MpHandler >> aboutToReturnWithReceiver: receiver arguments: arguments [
 { #category : #evaluating }
 MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue [
 
+	self afterMethod.
 	^ aReturnValue
 ]
 
@@ -35,19 +44,4 @@ MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
 { #category : #evaluating }
 MpHandler >> beforeMethod [
-]
-
-{ #category : #evaluating }
-MpHandler >> captureCallingContext [
-
-	| runWithInContext |
-	
-	"Find the context of #run:with:in:"	
-	runWithInContext := thisContext sender.
-	[ runWithInContext isNil 
-		or: [ runWithInContext method isCompiledMethod and: [runWithInContext method selector = #run:with:in:] ] ] 
-		whileFalse: [ runWithInContext := runWithInContext sender ].
-	
-	"Find the real sender"	
-	^ runWithInContext ifNotNil: [ runWithInContext sender ]
 ]

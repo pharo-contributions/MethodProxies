@@ -54,6 +54,8 @@ MpMethodProxyTest >> tearDown [
 		[ each uninstall ]
 			on: Error
 			do: [ :e | "continue" ] ].
+	(MpMethodProxy allInstances anySatisfy: [ :e | e isInstalled ])
+		ifTrue: [ self error: 'Proxies still installed after test: ', testSelector asString ].
 	super tearDown
 ]
 

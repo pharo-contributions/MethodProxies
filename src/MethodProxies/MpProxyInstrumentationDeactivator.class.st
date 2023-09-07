@@ -1,5 +1,5 @@
 Class {
-	#name : #ProxyInstrumentationDeactivator,
+	#name : #MpProxyInstrumentationDeactivator,
 	#superclass : #InstrumentationEnsurer,
 	#instVars : [
 		'handler'
@@ -8,19 +8,19 @@ Class {
 }
 
 { #category : #accessing }
-ProxyInstrumentationDeactivator >> handler [
+MpProxyInstrumentationDeactivator >> handler [
 
 	^ handler
 ]
 
 { #category : #accessing }
-ProxyInstrumentationDeactivator >> handler: anObject [
+MpProxyInstrumentationDeactivator >> handler: anObject [
 
 	handler := anObject
 ]
 
 { #category : #evaluating }
-ProxyInstrumentationDeactivator >> value [
+MpProxyInstrumentationDeactivator >> value [
 
 	<noInstrumentation>
 	"Slow path, an exception or a non local return happened"
