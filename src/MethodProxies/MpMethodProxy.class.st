@@ -1157,8 +1157,22 @@ MpMethodProxy >> install [
 		(proxyMethod hasPragmaNamed: #noInstrumentation) ifTrue: [
 			^ MpCannotInstall signalWith: self ].
 
-		deactivator := MpProxyInstrumentationDeactivator new.
-		deactivator handler: handler.
+		deactivator := [ "Execution handler for the slow path. An exception or a non local return happened during proxy execution"
+			| wasMeta trapContext |
+			
+			"Jump to the meta level (to avoid meta-recursions) to observe if the handler was in a meta level, marked by the wasMeta flag.
+			During the meta-jump call the handler to tell there was an unwind.
+			"
+			thisProcess shiftLevelUp.
+			trapContext := thisContext findContextSuchThat: [ :ctx | ctx isUnwindContext ].
+			wasMeta := trapContext tempNamed: 'wasMeta'.
+			handler aboutToReturnWithReceiver: trapContext receiver arguments: trapContext arguments.
+			thisProcess shiftLevelDown.
+			
+			"If the handler was in a meta-state (i.e., the exception or non-local return happened in the handler), shift it back to the base level before returning.
+			Otherwise, we were already in the base level and we need to do nothing!"
+			wasMeta ifTrue: [ thisProcess shiftLevelDown ].
+	 	].
 
 		newTrap := self trapMethodPrototype copy.
 		trapSelector := newTrap selector.

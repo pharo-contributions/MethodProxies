@@ -1,3 +1,10 @@
+"
+I represent a selector that is hidden for the user, used to install hidden methods in method dictionaries.
+I'm not a string, so I cannot be typed, avoiding potential conflicts.
+
+I'm used as key of the original method wrapped by proxies, to ensure this wrapped method can be called using myself as selector.
+Check my usages during proxy installation.
+"
 Class {
 	#name : #MpHiddenSelector,
 	#superclass : #Object,
