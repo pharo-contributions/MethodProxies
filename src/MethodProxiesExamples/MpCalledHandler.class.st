@@ -1,5 +1,5 @@
 "
-I'm a little example that reports if the spyied method has been executed. 
+I'm an example handler that reports if the spyied method has been executed
 "
 Class {
 	#name : #MpCalledHandler,

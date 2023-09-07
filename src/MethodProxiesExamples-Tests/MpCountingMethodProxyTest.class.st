@@ -1,6 +1,6 @@
 Class {
 	#name : #MpCountingMethodProxyTest,
-	#superclass : #MpMethodProxyTest,
+	#superclass : #MpAbstractMethodProxyTest,
 	#category : #'MethodProxiesExamples-Tests'
 }
 
@@ -11,18 +11,56 @@ MpCountingMethodProxyTest >> handlerClass [
 ]
 
 { #category : #tests }
-MpCountingMethodProxyTest >> testCounts [
+MpCountingMethodProxyTest >> testInstalledButNotCalledCounts0 [
 
 	| proxy instance handler |
-	[ proxy := MpMethodProxy
-		on: #methodOne
-		inClass: MpClassA
-		handler: (handler := self handlerClass new).
-	proxy install.
+	proxy := MpMethodProxy
+		         onMethod: MpClassA >> #methodOne
+		         handler: (handler := self handlerClass new).
+	self installMethodProxy: proxy.
+
 	instance := MpClassA new.
-	self assert: handler count equals: 0.
+	self assert: handler count equals: 0
+]
+
+{ #category : #tests }
+MpCountingMethodProxyTest >> testInstalledCalledOnceCounts1 [
+
+	| proxy instance handler |
+	proxy := MpMethodProxy
+		         onMethod: MpClassA >> #methodOne
+		         handler: (handler := self handlerClass new).
+	self installMethodProxy: proxy.
+
+	instance := MpClassA new.
 	instance methodOne.
-	self assert: handler count equals: 1.
+	self assert: handler count equals: 1
+]
+
+{ #category : #tests }
+MpCountingMethodProxyTest >> testInstalledCalledTwiceCounts2 [
+
+	| proxy instance handler instance2 |
+	proxy := MpMethodProxy
+		         onMethod: MpClassA >> #methodOne
+		         handler: (handler := self handlerClass new).
+	self installMethodProxy: proxy.
+
+	instance := MpClassA new.
 	instance methodOne.
-	self assert: handler count equals: 2 ] ensure: [ proxy uninstall ]
+
+	instance2 := MpClassA new.
+	instance2 methodOne.
+
+	self assert: handler count equals: 2
+]
+
+{ #category : #tests }
+MpCountingMethodProxyTest >> testNonInstalledCounts0 [
+
+	| proxy handler |
+	proxy := MpMethodProxy
+		         onMethod: MpClassA >> #methodOne
+		         handler: (handler := self handlerClass new).
+	self assert: handler count equals: 0
 ]

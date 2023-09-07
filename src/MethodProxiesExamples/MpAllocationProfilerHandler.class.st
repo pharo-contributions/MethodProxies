@@ -1,5 +1,6 @@
 "
-I'm a simple little profiler that can store all the objects returned by the spyied method.
+I'm an example handler for profiling purposes that stores all the objects returned by the spyied method
+
 ```
 h := MpAllocationProfilerHandler new.
 p1 := MpMethodProxy 
@@ -45,14 +46,13 @@ MpAllocationProfilerHandler >> allocations [
 MpAllocationProfilerHandler >> captureCallingContext [
 
 	| runWithInContext |
-	
-	"Find the context of #run:with:in:"	
+	"Find the context of #run:with:in:"
 	runWithInContext := thisContext sender.
-	[ runWithInContext isNil 
-		or: [ runWithInContext method isCompiledMethod and: [runWithInContext method selector = #run:with:in:] ] ] 
+	[
+	runWithInContext isNil or: [ runWithInContext method primitive = 198 ] ]
 		whileFalse: [ runWithInContext := runWithInContext sender ].
-	
-	"Find the real sender"	
+
+	"Find the real sender"
 	^ runWithInContext ifNotNil: [ runWithInContext sender ]
 ]
 
