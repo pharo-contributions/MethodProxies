@@ -75,7 +75,7 @@ MpProfilingHandler >> instrumentImplementorsOf: potentialSelector [
 ]
 
 { #category : #accessing }
-MpProfilingHandler >> wrappedMethod [
+MpProfilingHandler >> proxifiedMethod [
 	^ wrappedMethod
 ]
 

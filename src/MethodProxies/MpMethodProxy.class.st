@@ -55,11 +55,11 @@ Class {
 	#name : #MpMethodProxy,
 	#superclass : #Object,
 	#instVars : [
-		'proxyMethod',
 		'handler',
 		'hiddenSelector',
 		'trapMethod',
-		'wrappedMethod'
+		'wrappedMethod',
+		'proxifiedMethod'
 	],
 	#category : #MethodProxies
 }
@@ -77,7 +77,7 @@ MpMethodProxy class >> buildPrototypesUpToArguments: maxNumberOfArguments [
 		| originalAst trapSelector trapArguments |
 		originalAst := (self class >> #prototypeTrap) parseTree.
 
-		trapSelector := #trap.
+		trapSelector := #trapMethod.
 		1 to: numberOfArguments do: [ :i |
 		trapSelector := trapSelector , #with: ].
 		trapArguments := (1 to: numberOfArguments) collect: [ :i |
@@ -162,7 +162,7 @@ MpMethodProxy class >> proxyMethod: method handler: aHandler [
 ]
 
 { #category : #'as yet unclassified' }
-MpMethodProxy class >> trap [
+MpMethodProxy class >> trapMethod [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
@@ -170,7 +170,7 @@ MpMethodProxy class >> trap [
 	| deactivator complete result process wasMeta |
 	"Quick check, if we are in a meta-level do not instrument"
 	process := thisProcess.
-	process isMeta ifTrue: [ ^ self trap ].
+	process isMeta ifTrue: [ ^ self trapMethod ].
 
 	"Set the deactivator literal that will be later patched as exception handler"
 	deactivator := #deactivator.
@@ -187,7 +187,7 @@ MpMethodProxy class >> trap [
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-	result := self trap.
+	result := self trapMethod.
 
 	"Move to the meta level and call the after hooks.
 	Two after hooks are required.
@@ -1154,7 +1154,7 @@ MpMethodProxy >> install [
 
 	| deactivator newTrap index trapSelector |
 	thisProcess runInMetaLevel: [
-		(proxyMethod hasPragmaNamed: #noInstrumentation) ifTrue: [
+		(proxifiedMethod hasPragmaNamed: #noInstrumentation) ifTrue: [
 			^ MpCannotInstall signalWith: self ].
 
 		deactivator := [ "Execution handler for the slow path. An exception or a non local return happened during proxy execution"
@@ -1174,10 +1174,10 @@ MpMethodProxy >> install [
 			wasMeta ifTrue: [ thisProcess shiftLevelDown ].
 	 	].
 
-		newTrap := self trapMethodPrototype copy.
+		newTrap := self prototypeTrapMethod copy.
 		trapSelector := newTrap selector.
-		newTrap selector: proxyMethod selector.
-		newTrap methodClass: proxyMethod methodClass.
+		newTrap selector: proxifiedMethod selector.
+		newTrap methodClass: proxifiedMethod methodClass.
 
 		hiddenSelector := MpHiddenSelector new.
 
@@ -1193,14 +1193,14 @@ MpMethodProxy >> install [
 		"It could happen that a proxy wraps a proxy.
 		Remember the object that was installed at this moment.
 		This is the object to restore during uninstall"
-		wrappedMethod := proxyMethod methodClass methodDict
-			at: proxyMethod selector.
+		wrappedMethod := proxifiedMethod methodClass methodDict
+			at: proxifiedMethod selector.
 
-		proxyMethod methodClass methodDict
+		proxifiedMethod methodClass methodDict
 			at: hiddenSelector
-			put: proxyMethod.
-		proxyMethod methodClass methodDict
-			at: proxyMethod selector
+			put: proxifiedMethod.
+		proxifiedMethod methodClass methodDict
+			at: proxifiedMethod selector
 			put: newTrap.
 			
 		trapMethod := newTrap ]
@@ -1211,39 +1211,45 @@ MpMethodProxy >> isInstalled [
 
 	trapMethod ifNil: [ ^ false ].
 
-	^ proxyMethod methodClass >> proxyMethod selector == trapMethod
+	^ proxifiedMethod methodClass >> proxifiedMethod selector == trapMethod
 ]
 
 { #category : #accessing }
 MpMethodProxy >> methodClass [
 
-	^ proxyMethod methodClass
+	^ proxifiedMethod methodClass
+]
+
+{ #category : #installation }
+MpMethodProxy >> prototypeTrapMethod [
+
+	^ self class class methods detect: [ :m |
+		  m numArgs = proxifiedMethod numArgs and: [
+			  m selector beginsWith: 'trap' ] ]
+]
+
+{ #category : #accessing }
+MpMethodProxy >> proxifiedMethod [
+
+	^ proxifiedMethod
 ]
 
 { #category : #accessing }
 MpMethodProxy >> proxyMethod: anObject [
 
-	proxyMethod := anObject
+	proxifiedMethod := anObject
 ]
 
 { #category : #accessing }
 MpMethodProxy >> selector [
 	
-	^ proxyMethod selector
+	^ proxifiedMethod selector
 ]
 
 { #category : #accessing }
-MpMethodProxy >> trap [
+MpMethodProxy >> trapMethod [
 	
 	^ trapMethod
-]
-
-{ #category : #installation }
-MpMethodProxy >> trapMethodPrototype [
-
-	^ self class class methods detect: [ :m |
-		  m numArgs = proxyMethod numArgs and: [
-			  m selector beginsWith: 'trap' ] ]
 ]
 
 { #category : #installation }
@@ -1252,14 +1258,8 @@ MpMethodProxy >> uninstall [
 	self isInstalled ifFalse: [ ^ self ].
 
 	thisProcess runInMetaLevel: [
-		proxyMethod methodClass methodDict
-			at: proxyMethod selector
+		proxifiedMethod methodClass methodDict
+			at: proxifiedMethod selector
 			put: wrappedMethod.
-		proxyMethod methodClass methodDict removeKey: hiddenSelector ]
-]
-
-{ #category : #accessing }
-MpMethodProxy >> wrappedMethod [
-
-	^ proxyMethod
+		proxifiedMethod methodClass methodDict removeKey: hiddenSelector ]
 ]

@@ -301,7 +301,7 @@ MpMethodProxyTest >> testInstallSetCompiledMethod [
 	mw install.
 	self assert: mw selector equals: #methodOne.
 	self assert: mw methodClass equals: MpClassA.
-	self assert: mw wrappedMethod equals: method ] ensure: [ 
+	self assert: mw proxifiedMethod equals: method ] ensure: [ 
 		mw uninstall ]
 ]
 
@@ -362,7 +362,7 @@ MpMethodProxyTest >> testUninstall [
 	mp install.
 	self assert:
 		(MpClassA compiledMethodAt: #methodOne) selector = #methodOne.
-	self assert: (MpClassA compiledMethodAt: #methodOne) == mp trap ]
+	self assert: (MpClassA compiledMethodAt: #methodOne) == mp trapMethod ]
 		ensure: [
 			mp uninstall.
 			self assert: (MpClassA compiledMethodAt: #methodOne) == method ]
@@ -386,11 +386,11 @@ MpMethodProxyTest >> testUninstallNestedInRightOrderIsOk [
 	[
 	self
 		assert: (MpClassA compiledMethodAt: #methodOne)
-		identicalTo: mp2 trap ] ensure: [
+		identicalTo: mp2 trapMethod ] ensure: [
 		mp2 uninstall.
 		self
 			assert: (MpClassA compiledMethodAt: #methodOne)
-			identicalTo: mp trap ] ] ensure: [ mp uninstall ].
+			identicalTo: mp trapMethod ] ] ensure: [ mp uninstall ].
 	self
 		assert: (MpClassA compiledMethodAt: #methodOne)
 		identicalTo: method
@@ -404,7 +404,7 @@ MpMethodProxyTest >> testUnwrappedMethodAtOneLevelIsTheWrappedMethod [
 	mp := MpMethodProxy onMethod: method handler: self handlerClass new.
 	self installMethodProxy: mp.
 
-	self assert: mp wrappedMethod equals: method
+	self assert: mp proxifiedMethod equals: method
 ]
 
 { #category : #tests }
@@ -422,7 +422,7 @@ MpMethodProxyTest >> testUnwrappedMethodOfNestedMethodWrapperInTheCompiledMethod
 		       handler: MpMockMethodProxyHandler new.
 	self installMethodProxy: mp2.
 
-	self assert: mp2 wrappedMethod equals: mp trap.
+	self assert: mp2 proxifiedMethod equals: mp trapMethod.
 ]
 
 { #category : #'tests - safety' }
@@ -495,14 +495,14 @@ MpMethodProxyTest >> testWrappingTwiceIsPossible [
 
 	self assert: mp1 selector equals: #methodOne.
 	self assert: mp1 methodClass equals: MpClassA.
-	self assert: mp1 wrappedMethod equals: method.
+	self assert: mp1 proxifiedMethod equals: method.
 
 	self assert: mp2 selector equals: #methodOne.
 	self assert: mp2 methodClass equals: MpClassA.
-	self assert: mp2 wrappedMethod equals: mp1 trap ] ensure: [
+	self assert: mp2 proxifiedMethod equals: mp1 trapMethod ] ensure: [
 		[
 		mp2 uninstall.
-		self assert: (MpClassA methodDict at: #methodOne) equals: mp1 trap ]
+		self assert: (MpClassA methodDict at: #methodOne) equals: mp1 trapMethod ]
 			ensure: [
 				mp1 uninstall.
 				self assert: (MpClassA methodDict at: #methodOne) equals: method ] ]
