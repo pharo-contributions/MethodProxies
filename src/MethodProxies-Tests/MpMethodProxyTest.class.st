@@ -50,12 +50,26 @@ MpMethodProxyTest >> setUp [
 { #category : #initialization }
 MpMethodProxyTest >> tearDown [
 
-	trackedWrappers do: [ :each |
-		[ each uninstall ]
-			on: Error
-			do: [ :e | "continue" ] ].
+	| stillInstalled |
+	
+	"Uninstall proxies using a fixed point approach.
+	This is to cover a problem of proxies wrapping proxies for now"
+	[
+	stillInstalled := trackedWrappers select: [ :e | e isInstalled ].
+	stillInstalled isEmpty ] whileFalse: [
+		stillInstalled do: [ :each |
+			[
+			each uninstall.
+			trackedWrappers remove: each ]
+				on: Error
+				do: [ :e | "continue" ] ] ].
+
+	"Give me the guarantee that we did not leave proxies installed in the system"
 	(MpMethodProxy allInstances anySatisfy: [ :e | e isInstalled ])
-		ifTrue: [ self error: 'Proxies still installed after test: ', testSelector asString ].
+		ifTrue: [
+			self error:
+				'Proxies still installed after test: ' , testSelector asString ].
+
 	super tearDown
 ]
 
