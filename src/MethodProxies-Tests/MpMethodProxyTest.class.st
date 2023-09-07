@@ -234,7 +234,7 @@ MpMethodProxyTest >> testExceptionsAfterInstrumentationFlow [
 MpMethodProxyTest >> testExceptionsDuringInstrumentationDoNotBreakInstrumentation [
 "Managing exceptions in the wrapper"
 	| w |
-	w := MpMethodProxy onMethod: MpClassB >> #methodTwo  handler: MpFailingHandlerMock new.
+	w := MpMethodProxy onMethod: MpClassB >> #methodTwo  handler: MpFailingBeforeHandler new.
 	
 	self installMethodProxy: w.
 

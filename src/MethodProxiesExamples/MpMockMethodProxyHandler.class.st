@@ -1,7 +1,7 @@
 Class {
 	#name : #MpMockMethodProxyHandler,
 	#superclass : #MpHandler,
-	#category : #'MethodProxies-Tests'
+	#category : #MethodProxiesExamples
 }
 
 { #category : #evaluating }

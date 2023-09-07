@@ -3,13 +3,13 @@ I'm an example handler for testing purposes that fails on before.
 I'm used to check that the infrastructure does not collapse when a handler fails
 "
 Class {
-	#name : #MpFailingHandlerMock,
+	#name : #MpFailingBeforeHandler,
 	#superclass : #MpHandler,
 	#category : #MethodProxiesExamples
 }
 
 { #category : #evaluating }
-MpFailingHandlerMock >> beforeMethod [
+MpFailingBeforeHandler >> beforeMethod [
 
 	self error: 'error during instrumentation'
 ]
