@@ -100,6 +100,7 @@ MpMethodProxyTest >> testCanWrapBasicNew [
 
 	MpClassA new.
 
+	mp uninstall.
 	self assert: handler count equals: 1
 ]
 
@@ -282,7 +283,7 @@ MpMethodProxyTest >> testIsInstalledNestedMWAreNotInstalled [
 		      handler: self handlerClass new.
 	mp2 := MpMethodProxy
 		       onMethod: MpClassA >> #methodOne
-		       handler: MpMockMethodProxyHandler new.
+		       handler: self handlerClass new.
 
 	[
 	[
@@ -302,7 +303,7 @@ MpMethodProxyTest >> testRecursiveMethodWrapperDoesNotRecurse [
 
 	| mw method |
 	method := MpMockObject >> #recursiveMethod.
-	mw := MpMethodProxy onMethod: method handler: MpMockMethodProxyHandler new.
+	mw := MpMethodProxy onMethod: method handler: MpAfterResultHandler new.
 	self installMethodProxy: mw.
 
 	self assert: MpMockObject new recursiveMethod equals: 'trapped [original]'.
@@ -334,7 +335,7 @@ MpMethodProxyTest >> testUninstallNestedInRightOrderIsOk [
 		      handler: self handlerClass new.
 	mp2 := MpMethodProxy
 		       onMethod: MpClassA >> #methodOne
-		       handler: MpMockMethodProxyHandler new.
+		       handler: self handlerClass new.
 	self installMethodProxy: mp.
 	self installMethodProxy: mp2.
 
@@ -375,7 +376,7 @@ MpMethodProxyTest >> testUnwrappedMethodOfNestedMethodWrapperInTheCompiledMethod
 
 	mp2 := MpMethodProxy
 		       onMethod: MpClassA >> #methodOne
-		       handler: MpMockMethodProxyHandler new.
+		       handler: self handlerClass new.
 	self installMethodProxy: mp2.
 
 	self assert: mp2 proxifiedMethod equals: mp trapMethod.
@@ -446,7 +447,7 @@ MpMethodProxyTest >> testWrappingTwiceIsPossible [
 
 	mp2 := MpMethodProxy
 		       onMethod: MpClassA >> #methodOne
-		       handler: MpMockMethodProxyHandler new.
+		       handler: self handlerClass new.
 	self installMethodProxy: mp2.
 
 	self assert: mp1 selector equals: #methodOne.
