@@ -20,8 +20,9 @@ MpTestConcurrentSharedObject >> concurrencySemaphore: anObject [
 ]
 
 { #category : #initialization }
-MpTestConcurrentSharedObject >> initialize [ 
-	self concurrencySemaphore: (Semaphore new).
+MpTestConcurrentSharedObject >> initialize [
+
+	self concurrencySemaphore: Semaphore new
 ]
 
 { #category : #debugging }

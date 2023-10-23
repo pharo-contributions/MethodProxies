@@ -1,6 +1,7 @@
 "
 I'm a more advanced proxy that propagates itself during execution.
-When a proxy is executed, before letting the execution runs, it installs itself on all the implementators of the methods used in the method.
+When a proxy is executed, before letting the execution runs, it installs itself on all the implementors of the messages sent in the method.
+
 ```
 proxy := nil.
 proxies := nil.
@@ -75,7 +76,7 @@ MpProfilingHandler >> instrumentImplementorsOf: potentialSelector [
 ]
 
 { #category : #accessing }
-MpProfilingHandler >> wrappedMethod [
+MpProfilingHandler >> proxifiedMethod [
 	^ wrappedMethod
 ]
 

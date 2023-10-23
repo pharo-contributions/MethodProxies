@@ -9,13 +9,15 @@ BaselineOfMethodProxies >> baseline: spec [
 
 	<baseline>
 	spec for: #common do: [
-			spec package: #MethodProxies;
+		spec
+			package: #MethodProxies;
 			package: #'MethodProxies-Tests'
-			with: [ spec requires: #( #MethodProxies ) ];
+			with: [ spec requires: #( #MethodProxies #MethodProxiesExamples ) ];
 			package: #MethodProxiesExamples
 			with: [ spec requires: #( #MethodProxies ) ];
 			package: #'MethodProxiesExamples-Tests'
-			with: [ spec requires: #( #MethodProxiesExamples ) ].
+			with: [
+				spec requires: #( #'MethodProxies-Tests' ) ].
 
 		spec
 			group: 'Core' with: #( #MethodProxies );

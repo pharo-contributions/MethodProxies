@@ -1,6 +1,6 @@
 Class {
 	#name : #MpAllocationProfilerHandlerTest,
-	#superclass : #MpMethodProxyTest,
+	#superclass : #MpAbstractMethodProxyTest,
 	#category : #'MethodProxiesExamples-Tests'
 }
 

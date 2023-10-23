@@ -1,5 +1,5 @@
 "
-I'm counting the number of times I'm executed. 
+I'm an example handler that counts all the times a method has been invoked
 "
 Class {
 	#name : #MpCountingHandler,
