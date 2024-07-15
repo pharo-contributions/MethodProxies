@@ -1,10 +1,11 @@
 Class {
-	#name : #MpMockObject,
-	#superclass : #Object,
-	#category : #'MethodProxies-Tests'
+	#name : 'MpMockObject',
+	#superclass : 'Object',
+	#category : 'MethodProxies-Tests',
+	#package : 'MethodProxies-Tests'
 }
 
-{ #category : #G }
+{ #category : 'G' }
 MpMockObject >> recursiveMethod [
 
 	^ 'original'

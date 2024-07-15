@@ -13,35 +13,36 @@ Moreover, for cases when this is not required, two higher-level hooks are propos
 - `afterMethod`: called before the method returns, either by normal or abnormal execution. It does not allow any action on the return value.
 "
 Class {
-	#name : #MpHandler,
-	#superclass : #Object,
-	#category : #MethodProxies
+	#name : 'MpHandler',
+	#superclass : 'Object',
+	#category : 'MethodProxies',
+	#package : 'MethodProxies'
 }
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpHandler >> aboutToReturnWithReceiver: receiver arguments: arguments [
 
 	self afterMethod
 ]
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue [
 
 	self afterMethod.
 	^ aReturnValue
 ]
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpHandler >> afterMethod [
 	"Perform action after execution."
 ]
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
 	self beforeMethod
 ]
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpHandler >> beforeMethod [
 ]

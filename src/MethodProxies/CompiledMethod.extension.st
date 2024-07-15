@@ -1,24 +1,24 @@
-Extension { #name : #CompiledMethod }
+Extension { #name : 'CompiledMethod' }
 
-{ #category : #'*MethodProxies' }
+{ #category : '*MethodProxies' }
 CompiledMethod >> install [
 	"does not nothing. Act as a NullObject for MethodProxy."
 	^ self
 ]
 
-{ #category : #'*MethodProxies' }
+{ #category : '*MethodProxies' }
 CompiledMethod >> isMethodProxy [
 
 	^ false
 ]
 
-{ #category : #'*MethodProxies' }
+{ #category : '*MethodProxies' }
 CompiledMethod >> uninstall [
 	"does not nothing. Act as a NullObject for MethodProxy."
 	^ self
 ]
 
-{ #category : #'*MethodProxies' }
+{ #category : '*MethodProxies' }
 CompiledMethod >> unproxifiedMethod [
 	^ self 
 ]
