@@ -1,7 +1,5 @@
 # MethodProxies
-A library to decorate and control method execution. Such library allows one to proxy any method in the system and its architecture is robust enough to develop powerful propagating method proxies that automatically and lazzily install them without falling in endless loops.
-
-
+A library to decorate and control method execution. Such library allows one to proxy any method in the system and its architecture is robust enough to develop powerful propagating method proxies that automatically install them without falling in endless loops.
 
 
 ## Examples
@@ -9,13 +7,15 @@ A library to decorate and control method execution. Such library allows one to p
 A simple counting handler.
 
 ```
+handler :=  MpCountingHandler new.
 p := MpMethodProxy 
-         onMethod: Object >> #error: 
-	 handler: MpCountingHandler new.
+	onMethod: Object >> #error: 
+	handler: handler.
 p install.
-p uninstall.
+p enableInstrumentation.
 1 error: 'foo'.
-p count 
+p uninstall.
+handler count.
 >>> 1
 ```
 
@@ -28,6 +28,7 @@ p := MpMethodProxy
         onMethod: MwClassB >> #methodTwo 
 	handler: MpFailingHandlerMock new.
 p install.
+p enableInstrumentation.
 p uninstall.
 MpClassB new methodTwo.
 
@@ -54,6 +55,10 @@ p3 := MpMethodProxy
 	handler: h.
 p3 install.
 
+p1 enableInstrumentation.
+p2 enableInstrumentation.
+p3 enableInstrumentation.
+
 p1 uninstall.
 p2 uninstall.
 p3 uninstall.
@@ -71,7 +76,7 @@ The handler design protects you from that by avoiding that you extend and break 
 testCase := StringTest selector: #testAsCamelCase.
 (MpMethodProxy 
    onMethod: testCase testMethod 
-   handler: MpProfilingMethodHandler new) install.
+   handler: MpProfilingMethodHandler new) install; enableInstrumentation.
 testCase run.
 
 proxies := MpProfilingMethodHandler allInstances.
