@@ -1,1 +1,1 @@
-Package { #name : #MethodProxies }
+Package { #name : 'MethodProxies' }

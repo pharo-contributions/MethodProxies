@@ -1,10 +1,11 @@
 Class {
-	#name : #MpWaitAndTriggerBeforeHandler,
-	#superclass : #MpHandler,
-	#category : #'MethodProxies-Tests'
+	#name : 'MpWaitAndTriggerBeforeHandler',
+	#superclass : 'MpHandler',
+	#category : 'MethodProxies-Tests',
+	#package : 'MethodProxies-Tests'
 }
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpWaitAndTriggerBeforeHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 	"Begin execution, stop instrumentation and let first thread enter its method."
 	anObject concurrencySemaphore signal.

@@ -52,8 +52,8 @@ On top of this, the handler of traps is set as a literal that is patched.
 That literal is a normal object (`MpProxyInstrumentationDeactivator`) that on value inspects the stack (we are in the slow case anyways, who cares! :D) and performs what is required to do.
 "
 Class {
-	#name : #MpMethodProxy,
-	#superclass : #Object,
+	#name : 'MpMethodProxy',
+	#superclass : 'Object',
 	#instVars : [
 		'handler',
 		'hiddenSelector',
@@ -62,12 +62,13 @@ Class {
 		'proxifiedMethod'
 	],
 	#classVars : [
-		'MetaOwner'
+		'ENABLED'
 	],
-	#category : #MethodProxies
+	#category : 'MethodProxies',
+	#package : 'MethodProxies'
 }
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpMethodProxy class >> buildPrototypesUpToArguments: maxNumberOfArguments [
 	"This method builds/compiles the prototype traps for arguments up to the argument.
 	The trap prototypes are installed in this class' class side.
@@ -99,7 +100,25 @@ MpMethodProxy class >> buildPrototypesUpToArguments: maxNumberOfArguments [
 		self class compile: originalAst formattedCode ]
 ]
 
-{ #category : #'instance creation' }
+{ #category : 'as yet unclassified' }
+MpMethodProxy class >> disableInstrumentation [
+
+	ENABLED := false
+]
+
+{ #category : 'as yet unclassified' }
+MpMethodProxy class >> enableInstrumentation [
+
+	ENABLED := true
+]
+
+{ #category : 'class initialization' }
+MpMethodProxy class >> initialize [
+
+	self disableInstrumentation
+]
+
+{ #category : 'instance creation' }
 MpMethodProxy class >> onMethod: aMethod handler: aHandler [
 
 	^ self new
@@ -108,73 +127,15 @@ MpMethodProxy class >> onMethod: aMethod handler: aHandler [
 		  yourself
 ]
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpMethodProxy class >> prototypeTrap [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self originalMessage.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
-		^ self originalMessage ].
+	process isMeta ifTrue: [ ^ self originalMessage ].
 
 	"Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
@@ -212,7 +173,7 @@ MpMethodProxy class >> prototypeTrap [
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> proxyMethod: method handler: aHandler [
 
 	^ MpMethodProxy new
@@ -221,70 +182,15 @@ MpMethodProxy class >> proxyMethod: method handler: aHandler [
 		  yourself
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethod [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
 	process := Processor activeProcess.
 	process isMeta ifTrue: [ ^ self trapMethod ].
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := process.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self trapMethod.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := process.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-	MetaOwner == process ifTrue: [ ^ self trapMethod ].
 
 	"Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
@@ -322,73 +228,15 @@ MpMethodProxy class >> trapMethod [
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self trapMethodwith: arg1.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
-		^ self trapMethodwith: arg1 ].
+	process isMeta ifTrue: [ ^ self trapMethodwith: arg1 ].
 
 	"Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
@@ -426,73 +274,15 @@ MpMethodProxy class >> trapMethodwith: arg1 [
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self trapMethodwith: arg1 with: arg2.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
-		^ self trapMethodwith: arg1 with: arg2 ].
+	process isMeta ifTrue: [ ^ self trapMethodwith: arg1 with: arg2 ].
 
 	"Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
@@ -530,72 +320,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 [
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self trapMethodwith: arg1 with: arg2 with: arg3.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self trapMethodwith: arg1 with: arg2 with: arg3 ].
 
 	"Set the deactivator literal for the slow path.
@@ -634,76 +367,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 [
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -750,77 +422,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 [
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4
-			          with: arg5.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -869,78 +479,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4
-			          with: arg5
-			          with: arg6.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -991,79 +538,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4
-			          with: arg5
-			          with: arg6
-			          with: arg7.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -1116,80 +599,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4
-			          with: arg5
-			          with: arg6
-			          with: arg7
-			          with: arg8.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -1244,81 +662,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4
-			          with: arg5
-			          with: arg6
-			          with: arg7
-			          with: arg8
-			          with: arg9.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -1375,82 +727,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4
-			          with: arg5
-			          with: arg6
-			          with: arg7
-			          with: arg8
-			          with: arg9
-			          with: arg10.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -1509,83 +794,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4
-			          with: arg5
-			          with: arg6
-			          with: arg7
-			          with: arg8
-			          with: arg9
-			          with: arg10
-			          with: arg11.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -1646,84 +863,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4
-			          with: arg5
-			          with: arg6
-			          with: arg7
-			          with: arg8
-			          with: arg9
-			          with: arg10
-			          with: arg11
-			          with: arg12.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -1786,85 +934,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4
-			          with: arg5
-			          with: arg6
-			          with: arg7
-			          with: arg8
-			          with: arg9
-			          with: arg10
-			          with: arg11
-			          with: arg12
-			          with: arg13.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -1929,86 +1007,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4
-			          with: arg5
-			          with: arg6
-			          with: arg7
-			          with: arg8
-			          with: arg9
-			          with: arg10
-			          with: arg11
-			          with: arg12
-			          with: arg13
-			          with: arg14.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -2075,87 +1082,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 with: arg15 [
 	"The unwind handler should be the first temp, the complete flag should be the second temp.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	"Set the deactivator literal for the fast path.
-	It will be patched to an exception handler"
-	deactivator := #fastdeactivator.
-
-	"Quick check, if we are not in a meta-level, we are the first one here!
-	Chances are there are never meta-recursions.
-	Mark it and go FAST"
-	MetaOwner ifNil: [ "Take the ownership of the meta-level to call before"
-		MetaOwner := Processor activeProcess.
-		#handler beforeExecutionWithReceiver: self arguments: #(  ).
-
-		"Release it before forwarding the call"
-		MetaOwner := nil.
-		result := self
-			          trapMethodwith: arg1
-			          with: arg2
-			          with: arg3
-			          with: arg4
-			          with: arg5
-			          with: arg6
-			          with: arg7
-			          with: arg8
-			          with: arg9
-			          with: arg10
-			          with: arg11
-			          with: arg12
-			          with: arg13
-			          with: arg14
-			          with: arg15.
-
-		"Try to get it back and do the fast path if that's the case."
-		MetaOwner ifNil: [
-			MetaOwner := Processor activeProcess.
-			result := #handler
-				          afterExecutionWithReceiver: self
-				          arguments: #(  )
-				          returnValue: result.
-			MetaOwner := nil.
-			^ result ].
-
-		"However, maybe another process took it.
-		In that case we will need to fall back to the slow case"
-
-		"Set the deactivator literal for the slow path.
-		It will be patched to an exception handler"
-		deactivator := #slowdeactivator.
-
-
-		process := Processor activeProcess.
-		"Move to the meta level and call the after hooks.
-		Two after hooks are required.
-		One indicates the method is returning either because a normal return,
-		or a stack unwind due to exceptions or non-local returns
-		The other indicates we are returning normally with a value."
-		process shiftLevelUp.
-		wasMeta := true.
-		result := #handler
-			          afterExecutionWithReceiver: self
-			          arguments: #(  )
-			          returnValue: result.
-		process shiftLevelDown.
-		wasMeta := false.
-
-		"Mark the execution as complete to avoid double execution of the unwind handler"
-		complete := true.
-		^ result ].
-
-	"If we are here, this is maybe a meta call.
-	Two possibilities:
-		- we are in the same thread of another meta call: we should just forward without instrumenting
-		- we are in another thread: increase the meta-level normally"
-
 	process := Processor activeProcess.
-	MetaOwner == Processor activeProcess ifTrue: [
+	process isMeta ifTrue: [
 		^ self
 			  trapMethodwith: arg1
 			  with: arg2
@@ -2224,63 +1159,62 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	^ result
 ]
 
-{ #category : #accessing }
+{ #category : 'installation' }
+MpMethodProxy >> disableInstrumentation [
+
+	self class disableInstrumentation
+]
+
+{ #category : 'installation' }
+MpMethodProxy >> enableInstrumentation [
+
+	self class enableInstrumentation
+]
+
+{ #category : 'accessing' }
 MpMethodProxy >> handler [
 
 	^ handler
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpMethodProxy >> handler: anObject [
 
 	handler := anObject
 ]
 
-{ #category : #installation }
+{ #category : 'installation' }
 MpMethodProxy >> install [
 
-	| slowdeactivator newTrap index trapSelector fastdeactivator |
+	| slowdeactivator newTrap index trapSelector |
+	
+	"Disable instrumentation during installation to make it safe.
+	We don't want to call instrumented methods when installing the instrumentation"
+	self disableInstrumentation.
+	
 	thisProcess runInMetaLevel: [
-		MetaOwner := Processor activeProcess.
-		[
 		(proxifiedMethod hasPragmaNamed: #noInstrumentation) ifTrue: [
 			^ MpCannotInstall signalWith: self ].
 
-		slowdeactivator := [ "Execution handler for the slow path. An exception or a non local return happened during proxy execution"
-		                   | wasMeta trapContext |
-		                   "Jump to the meta level (to avoid meta-recursions) to observe if the handler was in a meta level, marked by the wasMeta flag.
-			During the meta-jump call the handler to tell there was an unwind.
-			"
-		                   thisProcess shiftLevelUp.
-		                   trapContext := thisContext findContextSuchThat: [
-			                                  :ctx | ctx isUnwindContext ].
-		                   wasMeta := trapContext tempNamed: 'wasMeta'.
-		                   handler
-			                   aboutToReturnWithReceiver: trapContext receiver
-			                   arguments: trapContext arguments.
-		                   thisProcess shiftLevelDown.
-
-		                   "If the handler was in a meta-state (i.e., the exception or non-local return happened in the handler), shift it back to the base level before returning.
-			Otherwise, we were already in the base level and we need to do nothing!"
-		                   wasMeta ifTrue: [ thisProcess shiftLevelDown ] ].
-
-		fastdeactivator := [ | trapContext |
-			"If we fall in here, we were in the fast path.
-			This means we were the owners of the meta level when calling before or after.
-			If that it the case, release ownership.
-			
-			But! this could have been stolen when forwarding.
-			If that is the case, leave the ownership to the othe thread
-			"
+		slowdeactivator := [
+			"Execution handler for the slow path. An exception or a non local return happened during proxy execution"
+			| wasMeta trapContext |
+			"Jump to the meta level (to avoid meta-recursions) to observe if the handler was in a meta level, marked by the wasMeta flag.
+			During the meta-jump call the handler to tell there was an unwind."
 			thisProcess shiftLevelUp.
-		   trapContext := thisContext findContextSuchThat: [
-			                                  :ctx | ctx isUnwindContext ].
-		   handler
+			trapContext := thisContext findNextUnwindContextUpTo: nil.
+			wasMeta := trapContext tempNamed: 'wasMeta'.
+			handler
 				aboutToReturnWithReceiver: trapContext receiver
-			 	arguments: trapContext arguments.
-		   thisProcess shiftLevelDown.
-			MetaOwner == Processor activeProcess
-				ifTrue: [ MetaOwner := nil ] ].
+				arguments: trapContext arguments.
+			thisProcess shiftLevelDown.
+
+			"If the handler was in a meta-state (i.e., the exception or non-local return happened in the handler), shift it back to the base level before returning.
+			Otherwise, we were already in the base level and we need to do nothing!"
+			wasMeta ifTrue: [ thisProcess shiftLevelDown ].
+	
+			"Mark execution as complete to avoid double execution of the handler."
+			trapContext tempNamed: 'complete' put: true. ].
 
 		newTrap := self prototypeTrapMethod copy.
 		trapSelector := newTrap selector.
@@ -2295,17 +1229,13 @@ MpMethodProxy >> install [
 		index := newTrap literals indexOf: #handler.
 		newTrap literalAt: index put: handler.
 
-		index := newTrap literals indexOf: #fastdeactivator.
-		newTrap literalAt: index put: fastdeactivator.
-
 		index := newTrap literals indexOf: #slowdeactivator.
 		newTrap literalAt: index put: slowdeactivator.
 
-		"It could happen that a proxy wraps a proxy.
-		Remember the object that was installed at this moment.
+		"It could happen that a proxy wraps a proxy. Remember the object that was installed at this moment.
 		This is the object to restore during uninstall"
-		wrappedMethod := proxifiedMethod methodClass methodDict at:
-			                 proxifiedMethod selector.
+		wrappedMethod := proxifiedMethod methodClass
+			methodDict at: proxifiedMethod selector.
 
 		proxifiedMethod methodClass methodDict
 			at: hiddenSelector
@@ -2314,10 +1244,10 @@ MpMethodProxy >> install [
 			at: proxifiedMethod selector
 			put: newTrap.
 
-		trapMethod := newTrap ] ensure: [ MetaOwner := nil ] ]
+		trapMethod := newTrap ]
 ]
 
-{ #category : #testing }
+{ #category : 'testing' }
 MpMethodProxy >> isInstalled [
 
 	trapMethod ifNil: [ ^ false ].
@@ -2325,13 +1255,13 @@ MpMethodProxy >> isInstalled [
 	^ proxifiedMethod methodClass >> proxifiedMethod selector == trapMethod
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpMethodProxy >> methodClass [
 
 	^ proxifiedMethod methodClass
 ]
 
-{ #category : #installation }
+{ #category : 'installation' }
 MpMethodProxy >> prototypeTrapMethod [
 
 	^ self class class methods detect: [ :m |
@@ -2339,32 +1269,35 @@ MpMethodProxy >> prototypeTrapMethod [
 			  m selector beginsWith: 'trap' ] ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpMethodProxy >> proxifiedMethod [
 
 	^ proxifiedMethod
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpMethodProxy >> proxyMethod: anObject [
 
 	proxifiedMethod := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpMethodProxy >> selector [
 	
 	^ proxifiedMethod selector
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpMethodProxy >> trapMethod [
 	
 	^ trapMethod
 ]
 
-{ #category : #installation }
+{ #category : 'installation' }
 MpMethodProxy >> uninstall [
+
+	"Disable instrumentation during installation to make it safe."
+	self disableInstrumentation.
 
 	self isInstalled ifFalse: [ ^ self ].
 

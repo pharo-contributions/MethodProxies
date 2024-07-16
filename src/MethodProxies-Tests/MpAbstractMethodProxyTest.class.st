@@ -1,34 +1,36 @@
 Class {
-	#name : #MpAbstractMethodProxyTest,
-	#superclass : #TestCase,
+	#name : 'MpAbstractMethodProxyTest',
+	#superclass : 'TestCase',
 	#instVars : [
 		'trackedWrappers'
 	],
-	#category : #'MethodProxies-Tests'
+	#category : 'MethodProxies-Tests',
+	#package : 'MethodProxies-Tests'
 }
 
-{ #category : #testing }
+{ #category : 'testing' }
 MpAbstractMethodProxyTest class >> isAbstract [
 
 	^ self == MpAbstractMethodProxyTest
 ]
 
-{ #category : #'tests - dead representation' }
+{ #category : 'tests - dead representation' }
 MpAbstractMethodProxyTest >> installMethodProxy: aMethodProxy [
 
 	trackedWrappers add: aMethodProxy.
-	aMethodProxy install.
-
+	aMethodProxy
+		install;
+		enableInstrumentation
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 MpAbstractMethodProxyTest >> setUp [
 
 	super setUp.
 	trackedWrappers := OrderedCollection new
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 MpAbstractMethodProxyTest >> tearDown [
 
 	| stillInstalled |

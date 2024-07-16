@@ -1,15 +1,16 @@
 Class {
-	#name : #MpMethodProxyTest,
-	#superclass : #MpAbstractMethodProxyTest,
-	#category : #'MethodProxies-Tests'
+	#name : 'MpMethodProxyTest',
+	#superclass : 'MpAbstractMethodProxyTest',
+	#category : 'MethodProxies-Tests',
+	#package : 'MethodProxies-Tests'
 }
 
-{ #category : #asserting }
+{ #category : 'asserting' }
 MpMethodProxyTest class >> shouldInheritSelectors [
 	^ true
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> assertCannotInstall: mp [
 
 	[mp install.
@@ -18,18 +19,18 @@ MpMethodProxyTest >> assertCannotInstall: mp [
 			self assert: ex methodProxy equals: mp ]
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> callEnsureWithNonLocalReturn [
 	
 	[ ^ 7 ] ensure: [ 2 ]
 ]
 
-{ #category : #hook }
+{ #category : 'hook' }
 MpMethodProxyTest >> handlerClass [ 
 	^ MpHandler
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testCanRunConcurrently [
 	"This tests the ability of method proxies to not influence each other between threads."
 
@@ -77,7 +78,7 @@ MpMethodProxyTest >> testCanRunConcurrently [
 	self assert: handlerTrigger2 count equals: 0
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testCanWrapAboutToReturnThroughWithNonLocalReturn [
 
 	| mp handler |
@@ -90,7 +91,7 @@ MpMethodProxyTest >> testCanWrapAboutToReturnThroughWithNonLocalReturn [
 	self assert: handler count equals: 1
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testCanWrapBasicNew [
 
 	| mp handler |
@@ -104,7 +105,7 @@ MpMethodProxyTest >> testCanWrapBasicNew [
 	self assert: handler count equals: 1
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testCanWrapEnsure [
 
 	| mp handler |
@@ -117,7 +118,7 @@ MpMethodProxyTest >> testCanWrapEnsure [
 	self assert: handler count equals: 1
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testCanWrapEnsureNonLocalReturn [
 
 	| mp handler |
@@ -130,7 +131,7 @@ MpMethodProxyTest >> testCanWrapEnsureNonLocalReturn [
 	self assert: handler count equals: 1
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testCanWrapEnsureWithException [
 
 	| mp handler |
@@ -143,7 +144,7 @@ MpMethodProxyTest >> testCanWrapEnsureWithException [
 	self assert: handler count equals: 1
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testCanWrapValue [
 	<compilerOptions: #(- optionConstantBlockClosure)>
 	<compilerOptions: #(- optionOptimiseSpecialSends)>
@@ -157,7 +158,7 @@ MpMethodProxyTest >> testCanWrapValue [
 	self assert: handler count equals: 2
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testCanWrapValueWithException [
 
 	<compilerOptions: #( #- optionOptimiseSpecialSends )>
@@ -175,7 +176,7 @@ MpMethodProxyTest >> testCanWrapValueWithException [
 	self assert: handler count equals: 2
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testCannotWrapCriticalProxyMethods6 [
 
 	| mp handler |
@@ -184,7 +185,7 @@ MpMethodProxyTest >> testCannotWrapCriticalProxyMethods6 [
 	self assertCannotInstall: mp
 ]
 
-{ #category : #'tests - dead representation' }
+{ #category : 'tests - dead representation' }
 MpMethodProxyTest >> testCreatingAnInstanceDoesNotInstallIt [
 
 	| mp |
@@ -197,7 +198,7 @@ MpMethodProxyTest >> testCreatingAnInstanceDoesNotInstallIt [
 	self deny: mp isInstalled
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testExceptionsAfterInstrumentationDoNotBreakInstrumentation [
 
 	| mp handler |
@@ -214,7 +215,7 @@ MpMethodProxyTest >> testExceptionsAfterInstrumentationDoNotBreakInstrumentation
 	self assert: handler count equals: 2
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testExceptionsAfterInstrumentationFlow [
 "Managing exceptions in the wrapper"
 	| p |
@@ -231,7 +232,7 @@ MpMethodProxyTest >> testExceptionsAfterInstrumentationFlow [
 				self assert: error messageText equals: 'error after instrumentation' ].]
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testExceptionsDuringInstrumentationDoNotBreakInstrumentation [
 "Managing exceptions in the wrapper"
 	| w |
@@ -248,7 +249,7 @@ MpMethodProxyTest >> testExceptionsDuringInstrumentationDoNotBreakInstrumentatio
 				self assert: error messageText equals: 'error during instrumentation' ].]
 ]
 
-{ #category : #'tests - installation' }
+{ #category : 'tests - installation' }
 MpMethodProxyTest >> testInstallSetCompiledMethod [
 
 	| mw method |
@@ -262,7 +263,7 @@ MpMethodProxyTest >> testInstallSetCompiledMethod [
 		mw uninstall ]
 ]
 
-{ #category : #'tests - installation' }
+{ #category : 'tests - installation' }
 MpMethodProxyTest >> testIsInstalled [
 
 	| mw method |
@@ -274,7 +275,7 @@ MpMethodProxyTest >> testIsInstalled [
 	self assert: mw isInstalled ] ensure: [ mw uninstall ]
 ]
 
-{ #category : #'tests - installation' }
+{ #category : 'tests - installation' }
 MpMethodProxyTest >> testIsInstalledNestedMWAreNotInstalled [
 
 	| mp mp2 |
@@ -298,7 +299,7 @@ MpMethodProxyTest >> testIsInstalledNestedMWAreNotInstalled [
 		self deny: mp isInstalled ]
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testRecursiveMethodWrapperDoesNotRecurse [
 
 	| mw method |
@@ -309,7 +310,7 @@ MpMethodProxyTest >> testRecursiveMethodWrapperDoesNotRecurse [
 	self assert: MpMockObject new recursiveMethod equals: 'trapped [original]'.
 ]
 
-{ #category : #'tests - installation' }
+{ #category : 'tests - installation' }
 MpMethodProxyTest >> testUninstall [
 
 	| mp method |
@@ -325,7 +326,7 @@ MpMethodProxyTest >> testUninstall [
 			self assert: (MpClassA compiledMethodAt: #methodOne) == method ]
 ]
 
-{ #category : #'tests - installation' }
+{ #category : 'tests - installation' }
 MpMethodProxyTest >> testUninstallNestedInRightOrderIsOk [
 
 	| mp mp2 method |
@@ -353,7 +354,7 @@ MpMethodProxyTest >> testUninstallNestedInRightOrderIsOk [
 		identicalTo: method
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 MpMethodProxyTest >> testUnwrappedMethodAtOneLevelIsTheWrappedMethod [
 
 	| mp method |
@@ -364,7 +365,7 @@ MpMethodProxyTest >> testUnwrappedMethodAtOneLevelIsTheWrappedMethod [
 	self assert: mp proxifiedMethod equals: method
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 MpMethodProxyTest >> testUnwrappedMethodOfNestedMethodWrapperInTheCompiledMethod [
 
 	| mp method mp2 |
@@ -382,7 +383,7 @@ MpMethodProxyTest >> testUnwrappedMethodOfNestedMethodWrapperInTheCompiledMethod
 	self assert: mp2 proxifiedMethod equals: mp trapMethod.
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testWrapEssentialPrimitiveShouldBeCalledDuringInstallation [
 
 	| mw method handler |
@@ -393,7 +394,7 @@ MpMethodProxyTest >> testWrapEssentialPrimitiveShouldBeCalledDuringInstallation 
 	self deny: handler called
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testWrapEssentialPrimitiveShouldNotRecurse [
 
 	| mw method handler |
@@ -408,7 +409,7 @@ MpMethodProxyTest >> testWrapEssentialPrimitiveShouldNotRecurse [
 	self assert: handler called
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testWrapMethodCalledDuringInstallationIsNotIntercepted [
 
 	| mw method handler |
@@ -419,7 +420,7 @@ MpMethodProxyTest >> testWrapMethodCalledDuringInstallationIsNotIntercepted [
 	self deny: handler called
 ]
 
-{ #category : #'tests - safety' }
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testWrapNonLocalReturns [
 
 	| mp handler |
@@ -434,7 +435,7 @@ MpMethodProxyTest >> testWrapNonLocalReturns [
 	self assert: handler count equals: 1
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 MpMethodProxyTest >> testWrappingTwiceIsPossible [
 
 	| mp1 method mp2 |
