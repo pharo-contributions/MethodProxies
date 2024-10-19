@@ -1221,7 +1221,9 @@ MpMethodProxy >> install [
 		newTrap selector: proxifiedMethod selector.
 		newTrap methodClass: proxifiedMethod methodClass.
 
-		hiddenSelector := MpHiddenSelector new.
+		hiddenSelector := MpHiddenSelector new
+			proxifiedSelector: proxifiedMethod selector;
+			yourself.
 
 		index := newTrap literals indexOf: trapSelector.
 		newTrap literalAt: index put: hiddenSelector.
