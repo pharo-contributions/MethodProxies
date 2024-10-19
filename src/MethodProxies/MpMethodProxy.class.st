@@ -1203,6 +1203,15 @@ MpMethodProxy >> install [
 			During the meta-jump call the handler to tell there was an unwind."
 			thisProcess shiftLevelUp.
 			trapContext := thisContext findNextUnwindContextUpTo: nil.
+		
+			[ "Look for the correct context in case it is not..."
+				trapContext ifNil: [ "Nothing to do here"
+					'Abort method proxy' traceCr.
+					^ nil
+				]. 
+				trapContext hasTemporaryVariableNamed: 'wasMeta'.
+			] whileFalse: [ trapContext := trapContext sender ].
+		
 			wasMeta := trapContext tempNamed: 'wasMeta'.
 			handler
 				aboutToReturnWithReceiver: trapContext receiver
