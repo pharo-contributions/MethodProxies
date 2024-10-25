@@ -50,6 +50,13 @@ MpClassA >> methodWithArgument: anInteger [
 ]
 
 { #category : 'debugging' }
+MpClassA >> methodWithArgumentOne: anInteger argumentTwo: anInteger2 [
+
+	self x: self x + anInteger + anInteger2 .
+	^ self x
+]
+
+{ #category : 'debugging' }
 MpClassA >> methodWithException [
 
 	1/0

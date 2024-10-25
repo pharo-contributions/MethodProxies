@@ -31,6 +31,52 @@ MpMethodProxyTest >> handlerClass [
 ]
 
 { #category : 'tests - safety' }
+MpMethodProxyTest >> testArgumentListIsSent [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: MpClassA >> #methodWithArgument: handler: (handler := MpArgumentsArrayHandler new).
+	
+	self installMethodProxy: mp.
+
+	MpClassA new x: 1; methodWithArgument: 111.
+
+	mp uninstall.
+	self assert: handler argsArray size equals: 1.
+	self assert: handler argsArray first equals: 111
+]
+
+{ #category : 'tests - safety' }
+MpMethodProxyTest >> testArgumentListIsSentSizeTwo [
+
+	| mp handler |
+	mp := MpMethodProxy
+		onMethod: MpClassA >> #methodWithArgumentOne:argumentTwo: handler: (handler := MpArgumentsArrayHandler new).
+	
+	self installMethodProxy: mp.
+
+	MpClassA new x:1; methodWithArgumentOne: 22 argumentTwo: 33.
+
+	mp uninstall.
+	self assert: handler argsArray size equals: 2.
+	self assert: handler argsArray first equals: 22.
+	 self assert: handler argsArray second equals: 33
+]
+
+{ #category : 'tests - safety' }
+MpMethodProxyTest >> testArgumentListIsSentSizeZero [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: MpClassA >> #methodTwo handler: (handler := MpArgumentsArrayHandler new).
+	
+	self installMethodProxy: mp.
+
+	MpClassA new methodTwo.
+
+	mp uninstall.
+	self assert: handler argsArray isEmpty
+]
+
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testCanRunConcurrently [
 	"This tests the ability of method proxies to not influence each other between threads."
 

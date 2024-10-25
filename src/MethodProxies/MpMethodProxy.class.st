@@ -76,25 +76,26 @@ MpMethodProxy class >> buildPrototypesUpToArguments: maxNumberOfArguments [
 
 	"self buildPrototypesUpToArguments: 15"
 
-	| forwarders |
+	| forwarders argumentListNodes |
 	0 to: maxNumberOfArguments do: [ :numberOfArguments |
 		| originalAst trapSelector trapArguments |
 		originalAst := (self class >> #prototypeTrap) parseTree.
 
 		trapSelector := #trapMethod.
-		1 to: numberOfArguments do: [ :i |
-		trapSelector := trapSelector , #with: ].
+		1 to: numberOfArguments do: [ :i | trapSelector := trapSelector , #with: ].
 		trapArguments := (1 to: numberOfArguments) collect: [ :i |
-			                 RBVariableNode named: 'arg' , i asString ].
+			                 ASTVariableNode named: 'arg' , i asString ].
 
 		originalAst selector: trapSelector.
 		originalAst arguments: trapArguments.
+		
+		argumentListNodes := originalAst allChildren select: [ :e | e value = #argumentList ].
+		argumentListNodes do: [ :e | e replaceWith: (ASTArrayNode statements: trapArguments) ].
 
-		forwarders := originalAst sendNodes select: [ :e |
-			              e selector = #originalMessage ].
+		forwarders := originalAst sendNodes select: [ :e | e selector = #originalMessage ].
 		forwarders do: [ :e |
-			e replaceWith: (RBMessageNode
-					 receiver: RBVariableNode selfNode
+			e replaceWith: (ASTMessageNode
+					 receiver: ASTVariableNode selfNode
 					 selector: trapSelector
 					 arguments: trapArguments) ].
 		self class compile: originalAst formattedCode ]
@@ -144,7 +145,7 @@ MpMethodProxy class >> prototypeTrap [
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: #argumentList.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -163,7 +164,7 @@ MpMethodProxy class >> prototypeTrap [
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: #argumentList
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -199,7 +200,7 @@ MpMethodProxy class >> trapMethod [
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {  }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -218,7 +219,7 @@ MpMethodProxy class >> trapMethod [
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {  }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -245,7 +246,7 @@ MpMethodProxy class >> trapMethodwith: arg1 [
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: { arg1 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -264,7 +265,7 @@ MpMethodProxy class >> trapMethodwith: arg1 [
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: { arg1 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -291,7 +292,9 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 [
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -310,7 +313,9 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 [
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -338,7 +343,10 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 [
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -357,7 +365,10 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 [
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -389,7 +400,11 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 [
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -412,7 +427,11 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 [
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -445,7 +464,12 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -469,7 +493,12 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -503,7 +532,13 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -528,7 +563,13 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -563,7 +604,14 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -589,7 +637,14 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -625,7 +680,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -652,7 +715,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -689,7 +760,16 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -717,7 +797,16 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -755,7 +844,17 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -784,7 +883,17 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -823,7 +932,18 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10.
+			arg11 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -853,7 +973,18 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10.
+				          arg11 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -893,7 +1024,19 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10.
+			arg11.
+			arg12 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -924,7 +1067,19 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10.
+				          arg11.
+				          arg12 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -965,7 +1120,20 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10.
+			arg11.
+			arg12.
+			arg13 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -997,7 +1165,20 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10.
+				          arg11.
+				          arg12.
+				          arg13 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -1039,7 +1220,21 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10.
+			arg11.
+			arg12.
+			arg13.
+			arg14 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -1072,7 +1267,21 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10.
+				          arg11.
+				          arg12.
+				          arg13.
+				          arg14 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
@@ -1115,7 +1324,22 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #(  ).
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10.
+			arg11.
+			arg12.
+			arg13.
+			arg14.
+			arg15 }.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -1149,7 +1373,22 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	wasMeta := true.
 	result := #handler
 		          afterExecutionWithReceiver: self
-		          arguments: #(  )
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10.
+				          arg11.
+				          arg12.
+				          arg13.
+				          arg14.
+				          arg15 }
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
