@@ -34,15 +34,20 @@ MpMethodProxyTest >> handlerClass [
 MpMethodProxyTest >> testArgumentListIsSent [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: MpClassA >> #methodWithArgument: handler: (handler := MpArgumentsArrayHandler new).
+	mp := MpMethodProxy onMethod: MpClassA >> #methodWithArgument: handler: (handler := MpArgumentListTestHandler new).
 	
 	self installMethodProxy: mp.
 
 	MpClassA new x: 1; methodWithArgument: 111.
 
 	mp uninstall.
-	self assert: handler argsArray size equals: 1.
-	self assert: handler argsArray first equals: 111
+	"Test before"
+	self assert: handler beforeArgs size equals: 1.
+	self assert: handler beforeArgs first equals: 111.
+	
+	"Test after"
+	self assert: handler afterArgs size equals: 1.
+	self assert: handler afterArgs first equals: 111.
 ]
 
 { #category : 'tests - safety' }
@@ -50,30 +55,40 @@ MpMethodProxyTest >> testArgumentListIsSentSizeTwo [
 
 	| mp handler |
 	mp := MpMethodProxy
-		onMethod: MpClassA >> #methodWithArgumentOne:argumentTwo: handler: (handler := MpArgumentsArrayHandler new).
+		onMethod: MpClassA >> #methodWithArgumentOne:argumentTwo: handler: (handler := MpArgumentListTestHandler new).
 	
 	self installMethodProxy: mp.
 
 	MpClassA new x:1; methodWithArgumentOne: 22 argumentTwo: 33.
 
 	mp uninstall.
-	self assert: handler argsArray size equals: 2.
-	self assert: handler argsArray first equals: 22.
-	 self assert: handler argsArray second equals: 33
+	"Test before"
+	self assert: handler beforeArgs size equals: 2.
+	self assert: handler beforeArgs first equals: 22.
+	self assert: handler beforeArgs second equals: 33.
+	
+	"Test after"
+	self assert: handler afterArgs size equals: 2.
+	self assert: handler afterArgs first equals: 22.
+	self assert: handler afterArgs second equals: 33
 ]
 
 { #category : 'tests - safety' }
 MpMethodProxyTest >> testArgumentListIsSentSizeZero [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: MpClassA >> #methodTwo handler: (handler := MpArgumentsArrayHandler new).
+	mp := MpMethodProxy onMethod: MpClassA >> #methodTwo handler: (handler := MpArgumentListTestHandler new).
 	
 	self installMethodProxy: mp.
 
 	MpClassA new methodTwo.
 
 	mp uninstall.
-	self assert: handler argsArray isEmpty
+	"Test before"
+	self assert: handler beforeArgs isEmpty.
+	
+	"Test after"
+	self assert: handler afterArgs isEmpty.
 ]
 
 { #category : 'tests - safety' }
