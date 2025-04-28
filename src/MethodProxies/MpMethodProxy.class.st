@@ -1442,10 +1442,6 @@ MpMethodProxy >> install [
 			During the meta-jump call the handler to tell there was an unwind."
 			thisProcess shiftLevelUp.
 			trapContext := thisContext findNextUnwindContextUpTo: nil.
-			"It can happen if one instruments a method with calls directly the unwind marker primitive. Such as `ensure:`, `error:`, or `ifCurtailed:`
-			We need to re-search for OUR marker primitive"
-			(#( #ensure: #ifCurtailed: ) includes: trapContext selector) ifTrue: [
-				 trapContext := trapContext findNextUnwindContextUpTo: nil.].
 			wasMeta := trapContext tempNamed: 'wasMeta'.
 			handler
 				aboutToReturnWithReceiver: trapContext receiver
