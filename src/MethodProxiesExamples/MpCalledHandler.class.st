@@ -2,33 +2,34 @@
 I'm an example handler that reports if the spyied method has been executed
 "
 Class {
-	#name : #MpCalledHandler,
-	#superclass : #MpHandler,
+	#name : 'MpCalledHandler',
+	#superclass : 'MpHandler',
 	#instVars : [
 		'called'
 	],
-	#category : #MethodProxiesExamples
+	#category : 'MethodProxiesExamples',
+	#package : 'MethodProxiesExamples'
 }
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpCalledHandler >> beforeMethod [
 
 	called := true
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpCalledHandler >> called [
 
 	^ called
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpCalledHandler >> called: aBoolean [
 
 	called := aBoolean
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 MpCalledHandler >> initialize [
 
 	super initialize.

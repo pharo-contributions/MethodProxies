@@ -57,6 +57,12 @@ MpClassA >> methodWithArgumentOne: anInteger argumentTwo: anInteger2 [
 ]
 
 { #category : 'debugging' }
+MpClassA >> methodWithArgumentOne: anInteger argumentTwo: anInteger2 argThree: arg3 [
+
+	1 error
+]
+
+{ #category : 'debugging' }
 MpClassA >> methodWithException [
 
 	1/0
@@ -66,6 +72,12 @@ MpClassA >> methodWithException [
 MpClassA >> methodWithNonLocalReturn [
 
 	self methodAcceptingABlock: [ ^ self ]
+]
+
+{ #category : 'debugging' }
+MpClassA >> methodWithNonResumableError [
+
+	1 error
 ]
 
 { #category : 'debugging' }
