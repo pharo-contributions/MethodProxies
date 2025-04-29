@@ -55,8 +55,8 @@ MpDeactivator >> value [
 			During the meta-jump call the handler to tell there was an unwind."
 	thisProcess shiftLevelUp.
 	trapContext := thisContext.
-	[ trapContext := trapContext findNextUnwindContextUpTo: nil ] doWhileFalse: [
-		trapContext method hasPragmaNamed: #trap ].
+	[ trapContext := trapContext findNextUnwindContextUpTo: nil.
+	  trapContext method hasPragmaNamed: #trap ] whileFalse.
 
 	wasMeta := trapContext tempAt: trapContext method numArgs + WasMetaTempVariableIndex.
 	handler aboutToReturnWithReceiver: trapContext receiver arguments: trapContext arguments.
