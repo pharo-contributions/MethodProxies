@@ -3,11 +3,18 @@ Class {
 	#superclass : 'MpHandler',
 	#instVars : [
 		'beforeArgs',
-		'afterArgs'
+		'afterArgs',
+		'unwound'
 	],
 	#category : 'MethodProxies-Tests',
 	#package : 'MethodProxies-Tests'
 }
+
+{ #category : 'evaluating' }
+MpArgumentListTestHandler >> aboutToReturnWithReceiver: receiver arguments: arguments [
+
+	unwound := true
+]
 
 { #category : 'accessing' }
 MpArgumentListTestHandler >> afterArgs [
@@ -32,4 +39,16 @@ MpArgumentListTestHandler >> beforeArgs [
 MpArgumentListTestHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
 	beforeArgs := anArrayOfObjects
+]
+
+{ #category : 'accessing' }
+MpArgumentListTestHandler >> unwound [
+
+	^ unwound
+]
+
+{ #category : 'accessing' }
+MpArgumentListTestHandler >> unwound: anObject [
+
+	unwound := anObject
 ]

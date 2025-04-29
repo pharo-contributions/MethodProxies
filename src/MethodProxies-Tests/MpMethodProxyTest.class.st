@@ -31,6 +31,20 @@ MpMethodProxyTest >> handlerClass [
 ]
 
 { #category : 'tests - safety' }
+MpMethodProxyTest >> testAfterMethodGetsExecutedBesidesOfExceptioon [
+
+	| mp handler |
+	mp := MpMethodProxy
+		      onMethod: MpClassA >> #methodWithNonResumableError
+		      handler: (handler := MpAfterCounterHandler new).
+
+	self installMethodProxy: mp.
+
+	self should: [ MpClassA new methodWithNonResumableError ] raise: Error.
+	self assert: handler count equals: 1
+]
+
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testArgumentListIsSent [
 
 	| mp handler |
@@ -48,6 +62,35 @@ MpMethodProxyTest >> testArgumentListIsSent [
 	"Test after"
 	self assert: handler afterArgs size equals: 1.
 	self assert: handler afterArgs first equals: 111.
+]
+
+{ #category : 'tests - safety' }
+MpMethodProxyTest >> testArgumentListIsSentSizeThreeWithException [
+
+	| mp handler semaphore p |
+	mp := MpMethodProxy
+		      onMethod: MpClassA >> #methodWithArgumentOne:argumentTwo:argThree:
+		      handler: (handler := MpArgumentListTestHandler new).
+
+	self installMethodProxy: mp.
+
+	semaphore := Semaphore new.
+	p := [
+		     [ MpClassA new methodWithArgumentOne: 22 argumentTwo: 33 argThree: 3 ]
+			     on: Error
+			     do: [ semaphore wait ] ] forkAt: Processor activePriority + 1.
+
+	p terminate.
+
+	mp uninstall.
+
+	"Test before"
+	self assert: handler beforeArgs size equals: 3.
+	self assert: handler beforeArgs first equals: 22.
+	self assert: handler beforeArgs second equals: 33.
+	self assert: handler beforeArgs third equals: 3.
+	
+	self assert: handler unwound
 ]
 
 { #category : 'tests - safety' }
@@ -233,8 +276,10 @@ MpMethodProxyTest >> testCanWrapValueWithException [
 		on: Error
 		do: #yourself. "to avoid an extra block"
 
+	mp uninstall.
+
 	"#on:do: does send value too but it's optimised by default and there is no message send"
-	self assert: handler count equals: 2
+	self assert: handler count equals: 3
 ]
 
 { #category : 'tests - safety' }

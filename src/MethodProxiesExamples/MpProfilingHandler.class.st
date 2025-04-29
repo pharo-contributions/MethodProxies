@@ -21,16 +21,17 @@ proxies collect: #handler
 ```
 "
 Class {
-	#name : #MpProfilingHandler,
-	#superclass : #MpHandler,
+	#name : 'MpProfilingHandler',
+	#superclass : 'MpHandler',
 	#instVars : [
 		'count',
 		'wrappedMethod'
 	],
-	#category : #MethodProxiesExamples
+	#category : 'MethodProxiesExamples',
+	#package : 'MethodProxiesExamples'
 }
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpProfilingHandler >> beforeMethod [
 
 	self count: self count + 1.
@@ -41,26 +42,26 @@ MpProfilingHandler >> beforeMethod [
 		thenDo: [ :potentialSelector | self instrumentImplementorsOf: potentialSelector ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpProfilingHandler >> count [
 
 	^ count
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpProfilingHandler >> count: anInteger [
 
 	count := anInteger
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 MpProfilingHandler >> initialize [
 
 	super initialize.
 	count := 0.
 ]
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpProfilingHandler >> instrumentImplementorsOf: potentialSelector [
 
 	| newProxy |
@@ -75,12 +76,12 @@ MpProfilingHandler >> instrumentImplementorsOf: potentialSelector [
 	]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpProfilingHandler >> proxifiedMethod [
 	^ wrappedMethod
 ]
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpProfilingHandler >> wrappedMethod: aMethod [
 	wrappedMethod := aMethod
 ]

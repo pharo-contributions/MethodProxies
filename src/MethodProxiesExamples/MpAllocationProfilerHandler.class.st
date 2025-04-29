@@ -18,16 +18,17 @@ p3 install.
 ```
 "
 Class {
-	#name : #MpAllocationProfilerHandler,
-	#superclass : #MpHandler,
+	#name : 'MpAllocationProfilerHandler',
+	#superclass : 'MpHandler',
 	#instVars : [
 		'allocations',
 		'transformationBlock'
 	],
-	#category : #MethodProxiesExamples
+	#category : 'MethodProxiesExamples',
+	#package : 'MethodProxiesExamples'
 }
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 MpAllocationProfilerHandler >> afterExecutionWithReceiver: receiver arguments: arguments returnValue: returnValue [ 
 
 	| allocationsPerClass transformedContext |
@@ -37,12 +38,12 @@ MpAllocationProfilerHandler >> afterExecutionWithReceiver: receiver arguments: a
 	^ returnValue
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpAllocationProfilerHandler >> allocations [
 	^ allocations
 ]
 
-{ #category : #evaluating }
+{ #category : 'evaluating' }
 MpAllocationProfilerHandler >> captureCallingContext [
 
 	| runWithInContext |
@@ -56,20 +57,20 @@ MpAllocationProfilerHandler >> captureCallingContext [
 	^ runWithInContext ifNotNil: [ runWithInContext sender ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MpAllocationProfilerHandler >> contextTransformationBlock: aBlock [
 
 	transformationBlock := aBlock
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 MpAllocationProfilerHandler >> initialize [
 
 	super initialize.
 	allocations := Dictionary new.
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : 'as yet unclassified' }
 MpAllocationProfilerHandler >> transformContext: aContext [
 
 	^ transformationBlock 
