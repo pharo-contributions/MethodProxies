@@ -20,7 +20,7 @@ Class {
 { #category : 'faking selector' }
 MpHiddenSelector >> asSymbol [
 
-	^ self proxifiedSelector
+	^ proxifiedSelector
 ]
 
 { #category : 'faking selector' }

@@ -136,9 +136,9 @@ MpMethodProxy class >> prototypeTrap [
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [ ^ self originalMessage ].
 	process := Processor activeProcess.
-	process isMeta ifTrue: [ ^ self originalMessage ].
+	process isMeta ifTrue: [ ^ self originalMessage ].	
 
 	"Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
@@ -192,7 +192,7 @@ MpMethodProxy class >> trapMethod [
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [ ^ self trapMethod ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [ ^ self trapMethod ] "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler".
@@ -226,7 +226,7 @@ MpMethodProxy class >> trapMethodwith: arg1 [
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [ ^ self trapMethodwith: arg1 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [ ^ self trapMethodwith: arg1 ] "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler".
@@ -260,7 +260,7 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 [
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [ ^ self trapMethodwith: arg1 with: arg2 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [ ^ self trapMethodwith: arg1 with: arg2 ] "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler".
@@ -301,7 +301,7 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 [
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [ ^ self trapMethodwith: arg1 with: arg2 with: arg3 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [ ^ self trapMethodwith: arg1 with: arg2 with: arg3 ] "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler".
@@ -344,7 +344,12 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 [
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self
@@ -398,7 +403,13 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self
@@ -456,7 +467,14 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self
@@ -518,7 +536,15 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self
@@ -584,7 +610,16 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self
@@ -654,7 +689,17 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self
@@ -728,7 +773,18 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self
@@ -806,7 +862,19 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self
@@ -888,7 +956,20 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self
@@ -974,7 +1055,21 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12
+				  with: arg13 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self
@@ -1064,7 +1159,22 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12
+				  with: arg13
+				  with: arg14 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self
@@ -1158,7 +1268,23 @@ MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 wit
 	<trap>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
-	wasMeta := false.
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12
+				  with: arg13
+				  with: arg14
+				  with: arg15 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 			^ self

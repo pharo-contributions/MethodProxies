@@ -305,6 +305,58 @@ MpMethodProxyTest >> testCreatingAnInstanceDoesNotInstallIt [
 ]
 
 { #category : 'tests - safety' }
+MpMethodProxyTest >> testDisableInstrumentationSimple [
+
+	| mp handler |
+	mp := MpMethodProxy onMethod: (MpClassA >> #methodOne) handler: (handler := MpCountingHandler new).
+	
+	self installMethodProxy: mp.
+	mp disableInstrumentation.
+
+	MpClassA new
+		methodOne;
+		methodOne.
+
+	self assert: handler count equals: 0
+]
+
+{ #category : 'tests - safety' }
+MpMethodProxyTest >> testDisableInstrumentationValue [
+	<compilerOptions: #(- optionConstantBlockClosure)>
+	<compilerOptions: #(- optionOptimiseSpecialSends)>
+	| mp handler |
+	mp := MpMethodProxy onMethod: (FullBlockClosure lookupSelector: #value) handler: (handler := MpCountingHandler new).
+	
+	self installMethodProxy: mp.
+	mp disableInstrumentation.
+
+	[[ 1 ] value] value.
+
+	self assert: handler count equals: 0
+]
+
+{ #category : 'tests - safety' }
+MpMethodProxyTest >> testDisableInstrumentationValueWithException [
+
+	<compilerOptions: #( #- optionOptimiseSpecialSends )>
+	| mp handler |
+	mp := MpMethodProxy
+		      onMethod: (FullBlockClosure lookupSelector: #value)
+		      handler: (handler := MpCountingHandler new).
+
+	self installMethodProxy: mp.
+	mp disableInstrumentation.
+
+	[ [ [ 1 error ] value ] value ]
+		on: Error
+		do: #yourself. "to avoid an extra block"
+
+	mp uninstall.
+
+	self assert: handler count equals: 0
+]
+
+{ #category : 'tests - safety' }
 MpMethodProxyTest >> testExceptionsAfterInstrumentationDoNotBreakInstrumentation [
 
 	| mp handler |
