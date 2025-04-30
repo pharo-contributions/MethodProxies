@@ -1,12 +1,30 @@
 # MethodProxies
-A library to decorate and control method execution. Such library allows one to proxy any method in the system and its architecture is robust enough to develop powerful propagating method proxies that automatically install them without falling in endless loops.
 
+A library to decorate and control method execution. Such library allows one to proxy **any** method in the system and its architecture is robust enough to develop powerful propagating method proxies that automatically install them without falling in endless loops.
+
+## How to load
+
+```st
+EpMonitor disableDuring: [
+	Metacello new
+		baseline: 'MethodProxies';
+		repository: 'github://pharo-contributions/MethodProxies/src';
+		load. ]
+```
+
+#### How to depend on this project
+
+```st
+spec 
+    baseline: 'MethodProxies' 
+    with: [ spec repository: 'github://pharo-contributions/MethodProxies/src' ].
+```
 
 ## Examples
 
 A simple counting handler.
 
-```
+```st
 handler :=  MpCountingHandler new.
 p := MpMethodProxy 
 	onMethod: Object >> #error: 
@@ -21,7 +39,7 @@ handler count.
 
 A simple example showing that an handler may failed still the system does not destroy Pharo.
 
-```
+```st
 "Managing exceptions in the spyied method"
 
 p := MpMethodProxy 
@@ -31,16 +49,13 @@ p install.
 p enableInstrumentation.
 p uninstall.
 MpClassB new methodTwo.
-
-
 ```
-
 
 ### Sharing Handlers
 The design of method proxies supports the sharing of handlers between multiple proxied methods. 
 For example the following example shows how we can monitor and gather information about `new` and `new:` in the same place
 
-```
+```st
 h := MpAllocationProfilerHandler new.
 p1 := MpMethodProxy 
 	onMethod: Behavior >> #basicNew 
@@ -71,35 +86,16 @@ The idea is simple, before a method executes, all the implementor methods of its
 So instead of proxifying the complete system only we subpart is spyied. This is this challenging because the infrastructure should make sure that we are not proxifying the code that is proxifying the system else we would end up in a severe and endless loop. 
 The handler design protects you from that by avoiding that you extend and break the clear separation between base and meta-level.
 
-
-```
+```st
 testCase := StringTest selector: #testAsCamelCase.
 (MpMethodProxy 
    onMethod: testCase testMethod 
-   handler: MpProfilingMethodHandler new) install; enableInstrumentation.
+   handler: MpProfilingHandler new) install; enableInstrumentation.
 testCase run.
 
-proxies := MpProfilingMethodHandler allInstances.
+proxies := MpProfilingHandler allInstances.
 proxies do: #uninstall.
 ```
-
-## How to load
-
-```
-Metacello new
-  baseline: 'MethodProxies';
-  repository: 'github://pharo-contributions/MethodProxies/src';
-  load.
-```
-
-## How to depend on this project
-
-```
-spec 
-    baseline: 'MethodProxies' 
-    with: [ spec repository: 'github://pharo-contributions/MethodProxies/src' ].
-```
-
 
 ## Some Archeology and History
 
@@ -112,6 +108,7 @@ This is not the case for Pharo. And the design and implementation of MethodProxi
 
 ## Bibliography
 
+- Jordan Montaño S., Sandoval Alcócer J., Polito G., Ducasse S., Tesone P., MethodProxies: A Safe and Fast Message-Passing Control Library, IWST '24 June 2024, France. [PDF](https://hal.science/hal-04708729v1/document)
 - Stéphane Ducasse, Evaluating Message Passing Control Techniques in Smalltalk, Journal of Object-Oriented Programming (JOOP), 12, 39–44, SIGS Press, 1999, Impact factor 0.306. [PDF](http://rmod-files.lille.inria.fr/Team/Texts/Papers/Duca99aMsgPassingControl.pdf)
 - John Brant, Brian Foote, Ralph E. Johnson, and Donald Roberts. Wrappers to the Rescue. In Proceedings of European Conference on Object-Oriented Programming (ECOOP). Springer, Berlin, Heidelberg, 1998. http://www.laputan.org/brant/brant.html (https://link.springer.com/chapter/10.1007/BFb0054101)
 
