@@ -23,6 +23,12 @@ MpHiddenSelector >> asSymbol [
 	^ proxifiedSelector
 ]
 
+{ #category : 'accessing' }
+MpHiddenSelector >> at: anIndex [
+
+	^ proxifiedSelector at: anIndex
+]
+
 { #category : 'faking selector' }
 MpHiddenSelector >> beginsWith: aString [
 
@@ -46,4 +52,10 @@ MpHiddenSelector >> proxifiedSelector [
 MpHiddenSelector >> proxifiedSelector: anObject [
 
 	proxifiedSelector := anObject
+]
+
+{ #category : 'accessing' }
+MpHiddenSelector >> size [
+
+	^ proxifiedSelector size
 ]
