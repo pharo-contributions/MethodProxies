@@ -485,6 +485,25 @@ MpMethodProxyTest >> testUninstall [
 ]
 
 { #category : 'tests - installation' }
+MpMethodProxyTest >> testUninstallMethodDict [
+
+	| mp method sendersSize |
+	[
+	sendersSize := MpClassA methodDict keys size.
+	method := MpClassA >> #methodOne.
+	mp := MpMethodProxy onMethod: method handler: self handlerClass new.
+	mp install.
+
+	self assert: MpClassA methodDict keys size equals: sendersSize + 1.
+	self assert: (MpClassA methodDict keys select: [ :selector | selector class = MpHiddenSelector ]) size equals: 1 ]
+		ensure: [
+			mp uninstall.
+
+			self assert: MpClassA methodDict keys size equals: sendersSize .
+			self assert: (MpClassA methodDict keys select: [ :selector | selector class = MpHiddenSelector ]) size equals: 0 ]
+]
+
+{ #category : 'tests - installation' }
 MpMethodProxyTest >> testUninstallNestedInRightOrderIsOk [
 
 	| mp mp2 method |
