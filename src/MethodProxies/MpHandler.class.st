@@ -26,13 +26,20 @@ MpHandler >> aboutToReturnWithReceiver: receiver arguments: arguments [
 ]
 
 { #category : 'evaluating' }
-MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue [
+MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: returnValue [
 
-	^ aReturnValue
+	"This is the method that you need to subclass if you want to execute the after method."
+	
+	"IMPORTANT!! This method needs to **ALWAYS** return the object that the proxied method should return."
+	"This object is normally the argument `returnValue`; or something else if you want to change the returned object."
+
+	^ returnValue
 ]
 
 { #category : 'evaluating' }
 MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
+
+	"This is the method that you need to subclass if you want to execute a before action: an action that is executed before than the proxied method."
 
 	
 ]
