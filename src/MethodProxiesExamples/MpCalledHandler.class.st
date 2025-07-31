@@ -12,7 +12,7 @@ Class {
 }
 
 { #category : 'evaluating' }
-MpCalledHandler >> beforeMethod [
+MpCalledHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
 	called := true
 ]

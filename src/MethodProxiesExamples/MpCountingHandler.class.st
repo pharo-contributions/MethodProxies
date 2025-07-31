@@ -12,7 +12,7 @@ Class {
 }
 
 { #category : 'evaluating' }
-MpCountingHandler >> beforeMethod [
+MpCountingHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
 	self count: self count + 1
 ]

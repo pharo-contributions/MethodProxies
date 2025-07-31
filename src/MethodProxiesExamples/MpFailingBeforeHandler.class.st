@@ -10,7 +10,7 @@ Class {
 }
 
 { #category : 'evaluating' }
-MpFailingBeforeHandler >> beforeMethod [
+MpFailingBeforeHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
 	self error: 'error during instrumentation'
 ]

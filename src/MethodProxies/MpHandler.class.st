@@ -22,27 +22,17 @@ Class {
 { #category : 'evaluating' }
 MpHandler >> aboutToReturnWithReceiver: receiver arguments: arguments [
 
-	self afterMethod
+	self afterExecutionWithReceiver: receiver arguments: arguments returnValue: nil
 ]
 
 { #category : 'evaluating' }
 MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue [
 
-	self afterMethod.
 	^ aReturnValue
-]
-
-{ #category : 'evaluating' }
-MpHandler >> afterMethod [
-	"Perform action after execution."
 ]
 
 { #category : 'evaluating' }
 MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
-	self beforeMethod
-]
-
-{ #category : 'evaluating' }
-MpHandler >> beforeMethod [
+	
 ]

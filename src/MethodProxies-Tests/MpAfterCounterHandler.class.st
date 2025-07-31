@@ -13,7 +13,7 @@ Class {
 }
 
 { #category : 'evaluating' }
-MpAfterCounterHandler >> afterMethod [
+MpAfterCounterHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue [
 
 	count := count + 1
 ]

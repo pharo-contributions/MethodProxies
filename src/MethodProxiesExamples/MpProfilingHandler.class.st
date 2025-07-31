@@ -32,7 +32,7 @@ Class {
 }
 
 { #category : 'evaluating' }
-MpProfilingHandler >> beforeMethod [
+MpProfilingHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
 	self count: self count + 1.
 
