@@ -15,7 +15,8 @@ Class {
 { #category : 'evaluating' }
 MpAfterCounterHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: aReturnValue [
 
-	count := count + 1
+	count := count + 1.
+	^ aReturnValue
 ]
 
 { #category : 'accessing' }
