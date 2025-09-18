@@ -18,6 +18,18 @@ Class {
 }
 
 { #category : 'faking selector' }
+MpHiddenSelector >> < anObj [
+
+    ^ proxifiedSelector < anObj
+]
+
+{ #category : 'faking selector' }
+MpHiddenSelector >> > anObj [
+
+    ^ proxifiedSelector > anObj
+]
+
+{ #category : 'faking selector' }
 MpHiddenSelector >> asSymbol [
 
 	^ proxifiedSelector
