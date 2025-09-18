@@ -43,6 +43,12 @@ MpHiddenSelector >> flushCache [
 ]
 
 { #category : 'faking selector' }
+MpHiddenSelector >> isByteString [
+
+    ^ true
+]
+
+{ #category : 'faking selector' }
 MpHiddenSelector >> proxifiedSelector [
 
 	^ proxifiedSelector
