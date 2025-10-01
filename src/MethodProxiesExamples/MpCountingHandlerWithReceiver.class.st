@@ -1,3 +1,6 @@
+"
+I am an example of a handler that counts how many times a method has been called and stores all the receivers
+"
 Class {
 	#name : 'MpCountingHandlerWithReceiver',
 	#superclass : 'MpCountingHandler',

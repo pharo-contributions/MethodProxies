@@ -19,27 +19,37 @@ Class {
 	#package : 'MethodProxies'
 }
 
-{ #category : 'evaluating' }
+{ #category : 'evaluating - excepction or non local return' }
 MpHandler >> aboutToReturnWithReceiver: receiver arguments: arguments [
 
-	self afterExecutionWithReceiver: receiver arguments: arguments returnValue: nil
+    ^ self afterExecutionWithReceiver: receiver arguments: arguments returnValue: nil
 ]
 
 { #category : 'evaluating' }
 MpHandler >> afterExecutionWithReceiver: anObject arguments: anArrayOfObjects returnValue: returnValue [
+    "This is the method that you need to subclass if you want to execute the after method."
 
-	"This is the method that you need to subclass if you want to execute the after method."
-	
-	"IMPORTANT!! This method needs to **ALWAYS** return the object that the proxied method should return."
-	"This object is normally the argument `returnValue`; or something else if you want to change the returned object."
+    "IMPORTANT This method needs to ALWAYS return the object that the proxied method should return."
+    "This object is normally the argument `returnValue`; or something else if you want to change the returned object."
 
-	^ returnValue
+    self afterMethod.
+    ^ returnValue
+]
+
+{ #category : 'evaluating' }
+MpHandler >> afterMethod [
+
+    
 ]
 
 { #category : 'evaluating' }
 MpHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
-	"This is the method that you need to subclass if you want to execute a before action: an action that is executed before than the proxied method."
+    self beforeMethod
+]
 
-	
+{ #category : 'evaluating' }
+MpHandler >> beforeMethod [
+
+    
 ]

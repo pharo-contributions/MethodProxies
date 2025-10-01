@@ -1,3 +1,7 @@
+"
+I am a deactivator handler. When an exception or a non local return occurs, I will be executed just like an ensure:
+I am executed in the same way that an ensure does
+"
 Class {
 	#name : 'MpDeactivator',
 	#superclass : 'Object',

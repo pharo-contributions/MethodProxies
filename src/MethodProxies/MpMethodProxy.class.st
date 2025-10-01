@@ -1464,9 +1464,8 @@ MpMethodProxy >> methodClass [
 { #category : 'installation' }
 MpMethodProxy >> prototypeTrapMethod [
 
-	^ self class class methods detect: [ :m |
-		  m numArgs = proxifiedMethod numArgs and: [
-			  m selector beginsWith: 'trap' ] ]
+    ^ self class class methods detect: [ :m |
+          m numArgs = proxifiedMethod numArgs and: [ m selector beginsWith: 'trapMethod' ] ]
 ]
 
 { #category : 'accessing' }
