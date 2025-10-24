@@ -109,6 +109,8 @@ MethodProxies design rests on two pillars: **handlers** and the **trap method** 
 - Each controlled method is associated with a dedicated handler that defines the controlling methods. This specialization allows different instrumented methods to execute different handlers: **each controlled method can have its own handler**. Handlers can also be shared.
 - The second pillar, the trap method, is a **pre-compiled template method**. Instrumentation is achieved by copying the trap method and applying literal patching to replace the literal references to the actual handler and the original method. Finally, the trap method leverages Pharo’s *stack unwinding* mechanism to guarantee execution of the handlers without allocating block closures, gaining significantly in performance. The trap method is a precompiled template in which the before and after method handlers, and the original method are represented as literals, later updated through literal patching. It ensures safety by including a meta-safe mechanism to prevent infinite recursion and safe stack unwinds.
 
+![UML](https://github.com/user-attachments/assets/c617f480-702d-49d3-8e33-c1aec0756258)
+
 MethodProxies has a stratified architecture structured around two core classes: `MpMethodProxy` and `MpHandler`:
 
 - `MpMethodProxy` manages the lifecycle of an instrumented method. Users are not exposed to the internal logic and the implementation details.
@@ -124,6 +126,8 @@ Moreover, two higher-level hooks are provided, defined in terms of the ones desc
 - `beforeMethod` is invoked before the method execution begins.
 - It is a simpler version of `beforeExecutionWithReceiver:arguments:` that does not receives any arguments.
 - `afterMethod` is invoked before the method returns, either by normal completion or due to a stack unwind. This method does not receives any arguments and it does not allow modification of the return value.
+
+![Instrumentation](https://github.com/user-attachments/assets/6c9a0f6a-011e-49f9-a196-3d2ef5c1d5d7)
 
 ## Some Archeology and History
 
