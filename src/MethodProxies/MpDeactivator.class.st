@@ -19,8 +19,8 @@ Class {
 { #category : 'class initialization' }
 MpDeactivator class >> initialize [
 
-	WasMetaTempVariableIndex := (MpMethodProxy class >> #prototypeTrap) tempNames indexOf: #wasMeta.
-	CompleteTempVariableIndex := (MpMethodProxy class >> #prototypeTrap) tempNames indexOf: #complete
+    WasMetaTempVariableIndex := (MpMethodProxy class >> #prototypeTrap) numTemps. "last temp"
+    CompleteTempVariableIndex := 2 "always the second temp"
 ]
 
 { #category : 'as yet unclassified' }
