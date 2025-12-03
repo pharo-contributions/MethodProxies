@@ -50,6 +50,12 @@ MpDeactivator >> handler: aMpHandler [
 	handler := aMpHandler
 ]
 
+{ #category : 'testing' }
+MpDeactivator >> isBlock [
+
+	^ true
+]
+
 { #category : 'evaluating' }
 MpDeactivator >> value [
 	
