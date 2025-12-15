@@ -136,6 +136,7 @@ MpMethodProxy class >> prototypeTrap [
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
 	<trap>
+	<debuggerCompleteToSender>
 	<primitive: 198>
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [ ^ self originalMessage ].
@@ -189,1204 +190,1256 @@ MpMethodProxy class >> proxyMethod: method handler: aHandler [
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethod [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [ ^ self trapMethod ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [ ^ self trapMethod ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [ ^ self trapMethod ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [ ^ self trapMethod ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {  }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {  }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethod. "Move to the meta level and call the after hooks.
+	result := self trapMethod. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler afterExecutionWithReceiver: self arguments: {  } returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler afterExecutionWithReceiver: self arguments: {  } returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [ ^ self trapMethodwith: arg1 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [ ^ self trapMethodwith: arg1 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [ ^ self trapMethodwith: arg1 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [ ^ self trapMethodwith: arg1 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: { arg1 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: { arg1 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1. "Move to the meta level and call the after hooks.
+	result := self trapMethodwith: arg1. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler afterExecutionWithReceiver: self arguments: { arg1 } returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler afterExecutionWithReceiver: self arguments: { arg1 } returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [ ^ self trapMethodwith: arg1 with: arg2 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [ ^ self trapMethodwith: arg1 with: arg2 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [ ^ self trapMethodwith: arg1 with: arg2 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [ ^ self trapMethodwith: arg1 with: arg2 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1 with: arg2. "Move to the meta level and call the after hooks.
+	result := self trapMethodwith: arg1 with: arg2. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [ ^ self trapMethodwith: arg1 with: arg2 with: arg3 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [ ^ self trapMethodwith: arg1 with: arg2 with: arg3 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [ ^ self trapMethodwith: arg1 with: arg2 with: arg3 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [ ^ self trapMethodwith: arg1 with: arg2 with: arg3 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1 with: arg2 with: arg3. "Move to the meta level and call the after hooks.
+	result := self trapMethodwith: arg1 with: arg2 with: arg3. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4.
-            arg5 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4
+		          with: arg5. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4.
-                          arg5 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4.
-            arg5.
-            arg6 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4
+		          with: arg5
+		          with: arg6. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4.
-                          arg5.
-                          arg6 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4.
-            arg5.
-            arg6.
-            arg7 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4
+		          with: arg5
+		          with: arg6
+		          with: arg7. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4.
-                          arg5.
-                          arg6.
-                          arg7 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4.
-            arg5.
-            arg6.
-            arg7.
-            arg8 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4
+		          with: arg5
+		          with: arg6
+		          with: arg7
+		          with: arg8. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4.
-                          arg5.
-                          arg6.
-                          arg7.
-                          arg8 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4.
-            arg5.
-            arg6.
-            arg7.
-            arg8.
-            arg9 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4
+		          with: arg5
+		          with: arg6
+		          with: arg7
+		          with: arg8
+		          with: arg9. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4.
-                          arg5.
-                          arg6.
-                          arg7.
-                          arg8.
-                          arg9 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4.
-            arg5.
-            arg6.
-            arg7.
-            arg8.
-            arg9.
-            arg10 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4
+		          with: arg5
+		          with: arg6
+		          with: arg7
+		          with: arg8
+		          with: arg9
+		          with: arg10. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4.
-                          arg5.
-                          arg6.
-                          arg7.
-                          arg8.
-                          arg9.
-                          arg10 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4.
-            arg5.
-            arg6.
-            arg7.
-            arg8.
-            arg9.
-            arg10.
-            arg11 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10.
+			arg11 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4
+		          with: arg5
+		          with: arg6
+		          with: arg7
+		          with: arg8
+		          with: arg9
+		          with: arg10
+		          with: arg11. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4.
-                          arg5.
-                          arg6.
-                          arg7.
-                          arg8.
-                          arg9.
-                          arg10.
-                          arg11 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10.
+				          arg11 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4.
-            arg5.
-            arg6.
-            arg7.
-            arg8.
-            arg9.
-            arg10.
-            arg11.
-            arg12 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10.
+			arg11.
+			arg12 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4
+		          with: arg5
+		          with: arg6
+		          with: arg7
+		          with: arg8
+		          with: arg9
+		          with: arg10
+		          with: arg11
+		          with: arg12. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4.
-                          arg5.
-                          arg6.
-                          arg7.
-                          arg8.
-                          arg9.
-                          arg10.
-                          arg11.
-                          arg12 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10.
+				          arg11.
+				          arg12 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12
-                  with: arg13 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12
-                  with: arg13 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12
+				  with: arg13 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12
+				  with: arg13 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4.
-            arg5.
-            arg6.
-            arg7.
-            arg8.
-            arg9.
-            arg10.
-            arg11.
-            arg12.
-            arg13 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10.
+			arg11.
+			arg12.
+			arg13 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12
-                  with: arg13. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4
+		          with: arg5
+		          with: arg6
+		          with: arg7
+		          with: arg8
+		          with: arg9
+		          with: arg10
+		          with: arg11
+		          with: arg12
+		          with: arg13. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4.
-                          arg5.
-                          arg6.
-                          arg7.
-                          arg8.
-                          arg9.
-                          arg10.
-                          arg11.
-                          arg12.
-                          arg13 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10.
+				          arg11.
+				          arg12.
+				          arg13 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12
-                  with: arg13
-                  with: arg14 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12
-                  with: arg13
-                  with: arg14 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12
+				  with: arg13
+				  with: arg14 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12
+				  with: arg13
+				  with: arg14 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4.
-            arg5.
-            arg6.
-            arg7.
-            arg8.
-            arg9.
-            arg10.
-            arg11.
-            arg12.
-            arg13.
-            arg14 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10.
+			arg11.
+			arg12.
+			arg13.
+			arg14 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12
-                  with: arg13
-                  with: arg14. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4
+		          with: arg5
+		          with: arg6
+		          with: arg7
+		          with: arg8
+		          with: arg9
+		          with: arg10
+		          with: arg11
+		          with: arg12
+		          with: arg13
+		          with: arg14. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4.
-                          arg5.
-                          arg6.
-                          arg7.
-                          arg8.
-                          arg9.
-                          arg10.
-                          arg11.
-                          arg12.
-                          arg13.
-                          arg14 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10.
+				          arg11.
+				          arg12.
+				          arg13.
+				          arg14 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'as yet unclassified' }
 MpMethodProxy class >> trapMethodwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 with: arg15 [
-    "The unwind handler should be the first temp.
+	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
 	Then this method is free to use as many extra temporaries and arguments as is wants"
 
-    <trap>
-    <primitive: 198>
-    | deactivator complete result process wasMeta |
-    ENABLED ifFalse: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12
-                  with: arg13
-                  with: arg14
-                  with: arg15 ].
-    process := Processor activeProcess.
-    process isMeta ifTrue: [
-            ^ self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12
-                  with: arg13
-                  with: arg14
-                  with: arg15 ]. "Set the deactivator literal for the slow path.
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12
+				  with: arg13
+				  with: arg14
+				  with: arg15 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [
+			^ self
+				  trapMethodwith: arg1
+				  with: arg2
+				  with: arg3
+				  with: arg4
+				  with: arg5
+				  with: arg6
+				  with: arg7
+				  with: arg8
+				  with: arg9
+				  with: arg10
+				  with: arg11
+				  with: arg12
+				  with: arg13
+				  with: arg14
+				  with: arg15 ]. "Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
-    deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
-    process shiftLevelUp.
-    wasMeta := true.
-    #handler beforeExecutionWithReceiver: self arguments: {
-            arg1.
-            arg2.
-            arg3.
-            arg4.
-            arg5.
-            arg6.
-            arg7.
-            arg8.
-            arg9.
-            arg10.
-            arg11.
-            arg12.
-            arg13.
-            arg14.
-            arg15 }.
-    process shiftLevelDown.
-    wasMeta := false. "Back in the base-level forward the original message.
+	deactivator := #slowdeactivator. "Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: {
+			arg1.
+			arg2.
+			arg3.
+			arg4.
+			arg5.
+			arg6.
+			arg7.
+			arg8.
+			arg9.
+			arg10.
+			arg11.
+			arg12.
+			arg13.
+			arg14.
+			arg15 }.
+	process shiftLevelDown.
+	wasMeta := false. "Back in the base-level forward the original message.
 	This is a message to self that will be monomorphically linked by the VM.
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-    result := self trapMethodwith: arg1
-                  with: arg2
-                  with: arg3
-                  with: arg4
-                  with: arg5
-                  with: arg6
-                  with: arg7
-                  with: arg8
-                  with: arg9
-                  with: arg10
-                  with: arg11
-                  with: arg12
-                  with: arg13
-                  with: arg14
-                  with: arg15. "Move to the meta level and call the after hooks.
+	result := self
+		          trapMethodwith: arg1
+		          with: arg2
+		          with: arg3
+		          with: arg4
+		          with: arg5
+		          with: arg6
+		          with: arg7
+		          with: arg8
+		          with: arg9
+		          with: arg10
+		          with: arg11
+		          with: arg12
+		          with: arg13
+		          with: arg14
+		          with: arg15. "Move to the meta level and call the after hooks.
 	Two after hooks are required.
 	One indicates the method is returning either because a normal return, or a stack unwind due to exceptions or non-local returns
 	The other indicates we are returning normally with a value."
-    process shiftLevelUp.
-    wasMeta := true.
-    result := #handler
-                  afterExecutionWithReceiver: self
-                  arguments: {
-                          arg1.
-                          arg2.
-                          arg3.
-                          arg4.
-                          arg5.
-                          arg6.
-                          arg7.
-                          arg8.
-                          arg9.
-                          arg10.
-                          arg11.
-                          arg12.
-                          arg13.
-                          arg14.
-                          arg15 }
-                  returnValue: result.
-    process shiftLevelDown.
-    wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
-    complete := true.
-    ^ result
+	process shiftLevelUp.
+	wasMeta := true.
+	result := #handler
+		          afterExecutionWithReceiver: self
+		          arguments: {
+				          arg1.
+				          arg2.
+				          arg3.
+				          arg4.
+				          arg5.
+				          arg6.
+				          arg7.
+				          arg8.
+				          arg9.
+				          arg10.
+				          arg11.
+				          arg12.
+				          arg13.
+				          arg14.
+				          arg15 }
+		          returnValue: result.
+	process shiftLevelDown.
+	wasMeta := false. "Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
 ]
 
 { #category : 'installation' }
