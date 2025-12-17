@@ -53,3 +53,10 @@ MpHandler >> beforeMethod [
 
     
 ]
+
+{ #category : 'configuring' }
+MpHandler >> overridesBeforeMethod [
+	
+	^(self class lookupSelector: #beforeExecutionWithReceiver:arguments:)
+		methodClass ~= MpHandler
+]
