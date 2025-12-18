@@ -102,12 +102,13 @@ MpMethodProxy class >> buildPrototypesUpToArguments: maxNumberOfArguments [
 				argumentListNodes do: [ :e | | newSelectorPart |
 					newSelectorPart := '' join: ((1 to: trapArguments size) collect: [ :i | 'with:' ]).
 					e parent selector: (e parent selector copyReplaceAll: 'arguments:' with: newSelectorPart).
-					(e parent selector beginsWith: #before) ifTrue: [
-						"Expand the argument selector into a with:with:with: chain"
-						e parent arguments: (e parent arguments allButLast copyWithAll: (trapArguments collect: #copy))
-					] ifFalse: [ 
+					(e parent selector beginsWith: #after) ifTrue: [
 						"Expand the argument selector into a with:with:with: chain"
 						e parent arguments: (((e parent arguments allButLast: 2) copyWithAll: (trapArguments collect: #copy)) copyWith: e parent arguments last)
+					] ifFalse: [ 
+						"Handler after and instead here"
+						"Expand the argument selector into a with:with:with: chain"
+						e parent arguments: (e parent arguments allButLast copyWithAll: (trapArguments collect: #copy))
 					]
 				]
 			] ifFalse: [
@@ -3844,7 +3845,7 @@ MpMethodProxy class >> trapInstead [
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	result := #handler insteadExecutionWithReceiver: #argumentList.
+	result := #handler insteadExecutionWithReceiver: self.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -3876,9 +3877,7 @@ MpMethodProxy class >> trapInsteadwith: arg1 [
 	"Move to the meta level and call the before hook"
 	process shiftLevelUp.
 	wasMeta := true.
-	result := #handler
-		          insteadExecutionWithReceiver: arg1
-		          with: #argumentList.
+	result := #handler insteadExecutionWithReceiver: self with: arg1.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -3911,9 +3910,9 @@ MpMethodProxy class >> trapInsteadwith: arg1 with: arg2 [
 	process shiftLevelUp.
 	wasMeta := true.
 	result := #handler
-		          insteadExecutionWithReceiver: arg1
-		          with: arg2
-		          with: #argumentList.
+		          insteadExecutionWithReceiver: self
+		          with: arg1
+		          with: arg2.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -3948,10 +3947,10 @@ MpMethodProxy class >> trapInsteadwith: arg1 with: arg2 with: arg3 [
 	process shiftLevelUp.
 	wasMeta := true.
 	result := #handler
-		          insteadExecutionWithReceiver: arg1
+		          insteadExecutionWithReceiver: self
+		          with: arg1
 		          with: arg2
-		          with: arg3
-		          with: #argumentList.
+		          with: arg3.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -3994,11 +3993,11 @@ MpMethodProxy class >> trapInsteadwith: arg1 with: arg2 with: arg3 with: arg4 [
 	process shiftLevelUp.
 	wasMeta := true.
 	result := #handler
-		          insteadExecutionWithReceiver: arg1
+		          insteadExecutionWithReceiver: self
+		          with: arg1
 		          with: arg2
 		          with: arg3
-		          with: arg4
-		          with: #argumentList.
+		          with: arg4.
 	process shiftLevelDown.
 	wasMeta := false.
 
@@ -4043,12 +4042,12 @@ MpMethodProxy class >> trapInsteadwith: arg1 with: arg2 with: arg3 with: arg4 wi
 	process shiftLevelUp.
 	wasMeta := true.
 	result := #handler
-		          insteadExecutionWithReceiver: arg1
+		          insteadExecutionWithReceiver: self
+		          with: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
-		          with: arg5
-		          with: #argumentList.
+		          with: arg5.
 	process shiftLevelDown.
 	wasMeta := false.
 

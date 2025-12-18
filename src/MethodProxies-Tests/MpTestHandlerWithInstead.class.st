@@ -4,7 +4,8 @@ Class {
 	#instVars : [
 		'insteadCalls',
 		'afterCalls',
-		'beforeCalls'
+		'beforeCalls',
+		'insteadBlock'
 	],
 	#category : 'MethodProxies-Tests',
 	#package : 'MethodProxies-Tests'
@@ -55,6 +56,18 @@ MpTestHandlerWithInstead >> initialize [
 ]
 
 { #category : 'accessing' }
+MpTestHandlerWithInstead >> insteadBlock [
+
+	^ insteadBlock
+]
+
+{ #category : 'accessing' }
+MpTestHandlerWithInstead >> insteadBlock: anObject [
+
+	insteadBlock := anObject
+]
+
+{ #category : 'accessing' }
 MpTestHandlerWithInstead >> insteadCalls [
 
 	^ insteadCalls
@@ -70,4 +83,6 @@ MpTestHandlerWithInstead >> insteadCalls: anObject [
 MpTestHandlerWithInstead >> insteadExecutionWithReceiver: receiver [
 
 	insteadCalls := insteadCalls + 1.
+	
+	^ insteadBlock ifNotNil: [ insteadBlock value: receiver ]
 ]
