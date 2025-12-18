@@ -151,7 +151,7 @@ MpMethodProxy class >> onMethod: aMethod handler: aHandler [
 ]
 
 { #category : 'evaluating' }
-MpMethodProxy class >> prototypeTrapAfter [
+MpMethodProxy class >> prototypeTrapAfterOnly [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -189,45 +189,6 @@ MpMethodProxy class >> prototypeTrapAfter [
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
-
-	"Mark the execution as complete to avoid double execution of the unwind handler"
-	complete := true.
-	^ result
-]
-
-{ #category : 'evaluating' }
-MpMethodProxy class >> prototypeTrapBefore [
-	"The unwind handler should be the first temp.
-	The complete flag should be the second temp.
-	The last temp variable should be the wasMeta flag.
-	Then this method is free to use as many extra temporaries and arguments as is wants"
-
-	<trap>
-	<prototypeTrap>
-	<debuggerCompleteToSender>
-	<primitive: 198>
-	| deactivator complete result process wasMeta |
-	ENABLED ifFalse: [ ^ self originalMessage ].
-	process := Processor activeProcess.
-	process isMeta ifTrue: [ ^ self originalMessage ].	
-
-	"Set the deactivator literal for the slow path.
-	It will be patched to an exception handler"
-	deactivator := #slowdeactivator.
-
-	"Move to the meta level and call the before hook"
-	process shiftLevelUp.
-	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self arguments: #argumentList.
-	process shiftLevelDown.
-	wasMeta := false.
-
-	"Back in the base-level forward the original message.
-	This is a message to self that will be monomorphically linked by the VM.
-	The core idea is that
-	 - the original method is installed in the same method dictionary using a unique symbol
-	 - this call is patched to use that symbol for the send"
-	result := self originalMessage.
 
 	"Mark the execution as complete to avoid double execution of the unwind handler"
 	complete := true.
@@ -286,6 +247,45 @@ MpMethodProxy class >> prototypeTrapBeforeAfter [
 	^ result
 ]
 
+{ #category : 'evaluating' }
+MpMethodProxy class >> prototypeTrapBeforeOnly [
+	"The unwind handler should be the first temp.
+	The complete flag should be the second temp.
+	The last temp variable should be the wasMeta flag.
+	Then this method is free to use as many extra temporaries and arguments as is wants"
+
+	<trap>
+	<prototypeTrap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [ ^ self originalMessage ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [ ^ self originalMessage ].	
+
+	"Set the deactivator literal for the slow path.
+	It will be patched to an exception handler"
+	deactivator := #slowdeactivator.
+
+	"Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self arguments: #argumentList.
+	process shiftLevelDown.
+	wasMeta := false.
+
+	"Back in the base-level forward the original message.
+	This is a message to self that will be monomorphically linked by the VM.
+	The core idea is that
+	 - the original method is installed in the same method dictionary using a unique symbol
+	 - this call is patched to use that symbol for the send"
+	result := self originalMessage.
+
+	"Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
+]
+
 { #category : 'instance creation' }
 MpMethodProxy class >> proxyMethod: method handler: aHandler [
 
@@ -296,7 +296,7 @@ MpMethodProxy class >> proxyMethod: method handler: aHandler [
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfter [
+MpMethodProxy class >> trapAfterOnly [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -316,7 +316,7 @@ MpMethodProxy class >> trapAfter [
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-	result := self trapAfter.
+	result := self trapAfterOnly.
 
 	ENABLED ifFalse: [ ^ result ].
 	process := Processor activeProcess.
@@ -340,7 +340,7 @@ MpMethodProxy class >> trapAfter [
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -360,7 +360,7 @@ MpMethodProxy class >> trapAfterwith: arg1 [
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-	result := self trapAfterwith: arg1.
+	result := self trapAfterOnlywith: arg1.
 
 	ENABLED ifFalse: [ ^ result ].
 	process := Processor activeProcess.
@@ -385,7 +385,7 @@ MpMethodProxy class >> trapAfterwith: arg1 [
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -405,7 +405,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 [
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-	result := self trapAfterwith: arg1 with: arg2.
+	result := self trapAfterOnlywith: arg1 with: arg2.
 
 	ENABLED ifFalse: [ ^ result ].
 	process := Processor activeProcess.
@@ -431,7 +431,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 [
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -451,7 +451,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 [
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-	result := self trapAfterwith: arg1 with: arg2 with: arg3.
+	result := self trapAfterOnlywith: arg1 with: arg2 with: arg3.
 
 	ENABLED ifFalse: [ ^ result ].
 	process := Processor activeProcess.
@@ -478,7 +478,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 [
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -499,7 +499,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 [
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4.
@@ -530,7 +530,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 [
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -551,7 +551,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -584,7 +584,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -605,7 +605,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -641,7 +641,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -662,7 +662,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -700,7 +700,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -721,7 +721,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -761,7 +761,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -782,7 +782,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -824,7 +824,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -845,7 +845,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -889,7 +889,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -910,7 +910,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -956,7 +956,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -977,7 +977,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -1025,7 +1025,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -1046,7 +1046,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -1096,7 +1096,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -1117,7 +1117,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -1169,7 +1169,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 with: arg15 [
+MpMethodProxy class >> trapAfterOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 with: arg15 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -1190,7 +1190,7 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapAfterwith: arg1
+		          trapAfterOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -1237,45 +1237,6 @@ MpMethodProxy class >> trapAfterwith: arg1 with: arg2 with: arg3 with: arg4 with
 		          returnValue: result.
 	process shiftLevelDown.
 	wasMeta := false.
-
-	"Mark the execution as complete to avoid double execution of the unwind handler"
-	complete := true.
-	^ result
-]
-
-{ #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBefore [
-	"The unwind handler should be the first temp.
-	The complete flag should be the second temp.
-	The last temp variable should be the wasMeta flag.
-	Then this method is free to use as many extra temporaries and arguments as is wants"
-
-	<trap>
-	<debuggerCompleteToSender>
-	<primitive: 198>
-	<autogenerated>
-	| deactivator complete result process wasMeta |
-	ENABLED ifFalse: [ ^ self trapBefore ].
-	process := Processor activeProcess.
-	process isMeta ifTrue: [ ^ self trapBefore ].
-
-	"Set the deactivator literal for the slow path.
-	It will be patched to an exception handler"
-	deactivator := #slowdeactivator.
-
-	"Move to the meta level and call the before hook"
-	process shiftLevelUp.
-	wasMeta := true.
-	#handler beforeExecutionWithReceiver: self.
-	process shiftLevelDown.
-	wasMeta := false.
-
-	"Back in the base-level forward the original message.
-	This is a message to self that will be monomorphically linked by the VM.
-	The core idea is that
-	 - the original method is installed in the same method dictionary using a unique symbol
-	 - this call is patched to use that symbol for the send"
-	result := self trapBefore.
 
 	"Mark the execution as complete to avoid double execution of the unwind handler"
 	complete := true.
@@ -2717,7 +2678,7 @@ MpMethodProxy class >> trapBeforeAfterwith: arg1 with: arg2 with: arg3 with: arg
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 [
+MpMethodProxy class >> trapBeforeOnly [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -2728,9 +2689,48 @@ MpMethodProxy class >> trapBeforewith: arg1 [
 	<primitive: 198>
 	<autogenerated>
 	| deactivator complete result process wasMeta |
-	ENABLED ifFalse: [ ^ self trapBeforewith: arg1 ].
+	ENABLED ifFalse: [ ^ self trapBeforeOnly ].
 	process := Processor activeProcess.
-	process isMeta ifTrue: [ ^ self trapBeforewith: arg1 ].
+	process isMeta ifTrue: [ ^ self trapBeforeOnly ].
+
+	"Set the deactivator literal for the slow path.
+	It will be patched to an exception handler"
+	deactivator := #slowdeactivator.
+
+	"Move to the meta level and call the before hook"
+	process shiftLevelUp.
+	wasMeta := true.
+	#handler beforeExecutionWithReceiver: self.
+	process shiftLevelDown.
+	wasMeta := false.
+
+	"Back in the base-level forward the original message.
+	This is a message to self that will be monomorphically linked by the VM.
+	The core idea is that
+	 - the original method is installed in the same method dictionary using a unique symbol
+	 - this call is patched to use that symbol for the send"
+	result := self trapBeforeOnly.
+
+	"Mark the execution as complete to avoid double execution of the unwind handler"
+	complete := true.
+	^ result
+]
+
+{ #category : 'as yet unclassified' }
+MpMethodProxy class >> trapBeforeOnlywith: arg1 [
+	"The unwind handler should be the first temp.
+	The complete flag should be the second temp.
+	The last temp variable should be the wasMeta flag.
+	Then this method is free to use as many extra temporaries and arguments as is wants"
+
+	<trap>
+	<debuggerCompleteToSender>
+	<primitive: 198>
+	<autogenerated>
+	| deactivator complete result process wasMeta |
+	ENABLED ifFalse: [ ^ self trapBeforeOnlywith: arg1 ].
+	process := Processor activeProcess.
+	process isMeta ifTrue: [ ^ self trapBeforeOnlywith: arg1 ].
 
 	"Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
@@ -2748,7 +2748,7 @@ MpMethodProxy class >> trapBeforewith: arg1 [
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-	result := self trapBeforewith: arg1.
+	result := self trapBeforeOnlywith: arg1.
 
 	"Mark the execution as complete to avoid double execution of the unwind handler"
 	complete := true.
@@ -2756,7 +2756,7 @@ MpMethodProxy class >> trapBeforewith: arg1 [
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -2767,9 +2767,9 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 [
 	<primitive: 198>
 	<autogenerated>
 	| deactivator complete result process wasMeta |
-	ENABLED ifFalse: [ ^ self trapBeforewith: arg1 with: arg2 ].
+	ENABLED ifFalse: [ ^ self trapBeforeOnlywith: arg1 with: arg2 ].
 	process := Processor activeProcess.
-	process isMeta ifTrue: [ ^ self trapBeforewith: arg1 with: arg2 ].
+	process isMeta ifTrue: [ ^ self trapBeforeOnlywith: arg1 with: arg2 ].
 
 	"Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
@@ -2787,7 +2787,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 [
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-	result := self trapBeforewith: arg1 with: arg2.
+	result := self trapBeforeOnlywith: arg1 with: arg2.
 
 	"Mark the execution as complete to avoid double execution of the unwind handler"
 	complete := true.
@@ -2795,7 +2795,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 [
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -2806,10 +2806,11 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 [
 	<primitive: 198>
 	<autogenerated>
 	| deactivator complete result process wasMeta |
-	ENABLED ifFalse: [ ^ self trapBeforewith: arg1 with: arg2 with: arg3 ].
+	ENABLED ifFalse: [
+		^ self trapBeforeOnlywith: arg1 with: arg2 with: arg3 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
-		^ self trapBeforewith: arg1 with: arg2 with: arg3 ].
+		^ self trapBeforeOnlywith: arg1 with: arg2 with: arg3 ].
 
 	"Set the deactivator literal for the slow path.
 	It will be patched to an exception handler"
@@ -2831,7 +2832,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 [
 	The core idea is that
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
-	result := self trapBeforewith: arg1 with: arg2 with: arg3.
+	result := self trapBeforeOnlywith: arg1 with: arg2 with: arg3.
 
 	"Mark the execution as complete to avoid double execution of the unwind handler"
 	complete := true.
@@ -2839,7 +2840,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 [
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -2852,14 +2853,14 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 [
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4 ].
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4 ].
@@ -2886,7 +2887,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 [
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4.
@@ -2897,7 +2898,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 [
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -2910,7 +2911,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -2918,7 +2919,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -2947,7 +2948,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -2959,7 +2960,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -2972,7 +2973,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -2981,7 +2982,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3011,7 +3012,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -3024,7 +3025,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -3037,7 +3038,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3047,7 +3048,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3079,7 +3080,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -3093,7 +3094,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -3106,7 +3107,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3117,7 +3118,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3151,7 +3152,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -3166,7 +3167,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -3179,7 +3180,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3191,7 +3192,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3227,7 +3228,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -3243,7 +3244,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -3256,7 +3257,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3269,7 +3270,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3307,7 +3308,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -3324,7 +3325,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -3337,7 +3338,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3351,7 +3352,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3391,7 +3392,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -3409,7 +3410,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -3422,7 +3423,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3437,7 +3438,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3479,7 +3480,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -3498,7 +3499,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -3511,7 +3512,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3527,7 +3528,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3571,7 +3572,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -3591,7 +3592,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -3604,7 +3605,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3621,7 +3622,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3667,7 +3668,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -3688,7 +3689,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 ]
 
 { #category : 'as yet unclassified' }
-MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 with: arg15 [
+MpMethodProxy class >> trapBeforeOnlywith: arg1 with: arg2 with: arg3 with: arg4 with: arg5 with: arg6 with: arg7 with: arg8 with: arg9 with: arg10 with: arg11 with: arg12 with: arg13 with: arg14 with: arg15 [
 	"The unwind handler should be the first temp.
 	The complete flag should be the second temp.
 	The last temp variable should be the wasMeta flag.
@@ -3701,7 +3702,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	| deactivator complete result process wasMeta |
 	ENABLED ifFalse: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3719,7 +3720,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	process := Processor activeProcess.
 	process isMeta ifTrue: [
 		^ self
-			  trapBeforewith: arg1
+			  trapBeforeOnlywith: arg1
 			  with: arg2
 			  with: arg3
 			  with: arg4
@@ -3767,7 +3768,7 @@ MpMethodProxy class >> trapBeforewith: arg1 with: arg2 with: arg3 with: arg4 wit
 	 - the original method is installed in the same method dictionary using a unique symbol
 	 - this call is patched to use that symbol for the send"
 	result := self
-		          trapBeforewith: arg1
+		          trapBeforeOnlywith: arg1
 		          with: arg2
 		          with: arg3
 		          with: arg4
@@ -3886,10 +3887,10 @@ MpMethodProxy >> prototypeTrapMethod [
 		ifTrue: [
 			overridesAfter
 				ifTrue: [ #trapBeforeAfter ]
-				ifFalse: [ #trapBefore ] ]
+				ifFalse: [ #trapBeforeOnly ] ]
 		ifFalse: [ 
 			overridesAfter
-				ifTrue: [ #trapAfter ]
+				ifTrue: [ #trapAfterOnly ]
 				ifFalse: [ 
 					"If you override nothing, we instrument everything.
 					This will degrade performance but not present strange exceptions during installation"
