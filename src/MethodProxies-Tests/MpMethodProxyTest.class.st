@@ -401,6 +401,58 @@ MpMethodProxyTest >> testInstallSetCompiledMethod [
 		mw uninstall ]
 ]
 
+{ #category : 'tests' }
+MpMethodProxyTest >> testInsteadCallsInsteadHook [
+
+	| mp1 method handler |
+	handler := MpTestHandlerWithInstead new.
+
+	method := MpClassA >> #methodWithException.
+	mp1 := MpMethodProxy
+		       onMethod: MpClassA >> #methodWithException
+		       handler: handler.
+	self installMethodProxy: mp1.
+
+	"This test implicitly shows that we do not call the original method, so no exception is raised!"
+	MpClassA new methodWithException.
+	
+	self assert: handler insteadCalls equals: 1
+]
+
+{ #category : 'tests' }
+MpMethodProxyTest >> testInsteadDoesNotCallAfterHook [
+
+	| mp1 method handler |
+	handler := MpTestHandlerWithInstead new.
+
+	method := MpClassA >> #methodWithException.
+	mp1 := MpMethodProxy
+		       onMethod: MpClassA >> #methodWithException
+		       handler: handler.
+	self installMethodProxy: mp1.
+
+	MpClassA new methodWithException.
+	
+	self assert: handler beforeCalls equals: 0
+]
+
+{ #category : 'tests' }
+MpMethodProxyTest >> testInsteadDoesNotCallBeforeHook [
+
+	| mp1 method handler |
+	handler := MpTestHandlerWithInstead new.
+
+	method := MpClassA >> #methodWithException.
+	mp1 := MpMethodProxy
+		       onMethod: MpClassA >> #methodWithException
+		       handler: handler.
+	self installMethodProxy: mp1.
+
+	MpClassA new methodWithException.
+	
+	self assert: handler beforeCalls equals: 0
+]
+
 { #category : 'tests - installation' }
 MpMethodProxyTest >> testIsInstalled [
 
