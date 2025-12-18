@@ -17,6 +17,12 @@ MpCountingHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfO
 	self count: self count + 1
 ]
 
+{ #category : 'evaluating' }
+MpCountingHandler >> beforeExecutionWithReceiver: anObject with: argument [
+
+	self count: self count + 1
+]
+
 { #category : 'accessing' }
 MpCountingHandler >> count [
 
