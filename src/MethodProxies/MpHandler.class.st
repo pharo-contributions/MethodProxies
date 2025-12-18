@@ -114,6 +114,40 @@ MpHandler >> beforeMethod [
     
 ]
 
+{ #category : 'evaluating' }
+MpHandler >> insteadExecutionWithReceiver: anObject [
+	^ self insteadExecutionWithReceiver: anObject arguments: {}
+]
+
+{ #category : 'evaluating' }
+MpHandler >> insteadExecutionWithReceiver: anObject arguments: arguments [
+]
+
+{ #category : 'evaluating' }
+MpHandler >> insteadExecutionWithReceiver: anObject with: arg1 [
+	^ self insteadExecutionWithReceiver: anObject arguments: {arg1}
+]
+
+{ #category : 'evaluating' }
+MpHandler >> insteadExecutionWithReceiver: anObject with: arg1 with: arg2 [
+	^ self insteadExecutionWithReceiver: anObject arguments: {arg1 . arg2}
+]
+
+{ #category : 'evaluating' }
+MpHandler >> insteadExecutionWithReceiver: anObject with: arg1 with: arg2 with: arg3 [
+	^ self insteadExecutionWithReceiver: anObject arguments: {arg1 . arg2 . arg3}
+]
+
+{ #category : 'evaluating' }
+MpHandler >> insteadExecutionWithReceiver: anObject with: arg1 with: arg2 with: arg3 with: arg4 [
+	^ self insteadExecutionWithReceiver: anObject arguments: {arg1 . arg2 . arg3 . arg4}
+]
+
+{ #category : 'evaluating' }
+MpHandler >> insteadExecutionWithReceiver: anObject with: arg1 with: arg2 with: arg3 with: arg4 with: arg5 [
+	^ self insteadExecutionWithReceiver: anObject arguments: {arg1 . arg2 . arg3 . arg4 . arg5}
+]
+
 { #category : 'as yet unclassified' }
 MpHandler >> overridesAfterMethodFor: anInteger [
 
@@ -140,5 +174,16 @@ MpHandler >> overridesBeforeMethodFor: anInteger [
 
 	^ (self class lookupSelector:
 		   (#beforeExecutionWithReceiver: , argKeywords) asSymbol)
+		  methodClass ~= MpHandler
+]
+
+{ #category : 'as yet unclassified' }
+MpHandler >> overridesInsteadMethodFor: anInteger [
+
+	| argKeywords |
+	argKeywords := '' join: ((1 to: anInteger) collect: [ :i | 'with:' ]).
+
+	^ (self class lookupSelector:
+		   (#insteadExecutionWithReceiver: , argKeywords) asSymbol)
 		  methodClass ~= MpHandler
 ]
