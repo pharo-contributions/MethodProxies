@@ -166,7 +166,7 @@ MpMethodProxyTest >> testCanRunConcurrently [
 MpMethodProxyTest >> testCanWrapAboutToReturnThroughWithNonLocalReturn [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: Context >> #aboutToReturn:through: handler: (handler := MpEmptyBeforeHandler new).
+	mp := MpMethodProxy onMethod: Context >> #aboutToReturn:through: handler: (handler := MpCountingHandler new).
 	
 	self installMethodProxy: mp.
 
@@ -179,7 +179,7 @@ MpMethodProxyTest >> testCanWrapAboutToReturnThroughWithNonLocalReturn [
 MpMethodProxyTest >> testCanWrapBasicNew [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: Behavior >> #basicNew handler: (handler := MpEmptyBeforeHandler new).
+	mp := MpMethodProxy onMethod: Behavior >> #basicNew handler: (handler := MpCountingHandler new).
 	
 	self installMethodProxy: mp.
 
@@ -193,7 +193,7 @@ MpMethodProxyTest >> testCanWrapBasicNew [
 MpMethodProxyTest >> testCanWrapEnsure [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: BlockClosure >> #ensure: handler: (handler := MpEmptyBeforeHandler new).
+	mp := MpMethodProxy onMethod: BlockClosure >> #ensure: handler: (handler := MpCountingHandler new).
 	
 	self installMethodProxy: mp.
 
@@ -206,7 +206,7 @@ MpMethodProxyTest >> testCanWrapEnsure [
 MpMethodProxyTest >> testCanWrapEnsureNonLocalReturn [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: BlockClosure >> #ensure: handler: (handler := MpEmptyBeforeHandler new).
+	mp := MpMethodProxy onMethod: BlockClosure >> #ensure: handler: (handler := MpCountingHandler new).
 	
 	self installMethodProxy: mp.
 
@@ -219,7 +219,7 @@ MpMethodProxyTest >> testCanWrapEnsureNonLocalReturn [
 MpMethodProxyTest >> testCanWrapEnsureWithException [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: BlockClosure >> #ensure: handler: (handler := MpEmptyBeforeHandler new).
+	mp := MpMethodProxy onMethod: BlockClosure >> #ensure: handler: (handler := MpCountingHandler new).
 	
 	self installMethodProxy: mp.
 
@@ -233,7 +233,7 @@ MpMethodProxyTest >> testCanWrapValue [
 	<compilerOptions: #(- optionConstantBlockClosure)>
 	<compilerOptions: #(- optionOptimiseSpecialSends)>
 	| mp handler |
-	mp := MpMethodProxy onMethod: (FullBlockClosure lookupSelector: #value) handler: (handler := MpEmptyBeforeHandler new).
+	mp := MpMethodProxy onMethod: (FullBlockClosure lookupSelector: #value) handler: (handler := MpCountingHandler new).
 	
 	self installMethodProxy: mp.
 
@@ -249,7 +249,7 @@ MpMethodProxyTest >> testCanWrapValueWithException [
 	| mp handler |
 	mp := MpMethodProxy
 		      onMethod: (FullBlockClosure lookupSelector: #value)
-		      handler: (handler := MpEmptyBeforeHandler new).
+		      handler: (handler := MpCountingHandler new).
 
 	self installMethodProxy: mp.
 	[ [ [ 1 error ] value ] value ]
@@ -266,7 +266,7 @@ MpMethodProxyTest >> testCanWrapValueWithException [
 MpMethodProxyTest >> testCannotWrapCriticalProxyMethods6 [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: InstrumentationDeactivator >> #value handler: (handler := MpEmptyBeforeHandler new).
+	mp := MpMethodProxy onMethod: InstrumentationDeactivator >> #value handler: (handler := MpCountingHandler new).
 	
 	self assertCannotInstall: mp
 ]
@@ -288,7 +288,7 @@ MpMethodProxyTest >> testCreatingAnInstanceDoesNotInstallIt [
 MpMethodProxyTest >> testDisableInstrumentationSimple [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: (MpClassA >> #methodOne) handler: (handler := MpEmptyBeforeHandler new).
+	mp := MpMethodProxy onMethod: (MpClassA >> #methodOne) handler: (handler := MpCountingHandler new).
 	
 	self installMethodProxy: mp.
 	mp disableInstrumentation.
@@ -305,7 +305,7 @@ MpMethodProxyTest >> testDisableInstrumentationValue [
 	<compilerOptions: #(- optionConstantBlockClosure)>
 	<compilerOptions: #(- optionOptimiseSpecialSends)>
 	| mp handler |
-	mp := MpMethodProxy onMethod: (FullBlockClosure lookupSelector: #value) handler: (handler := MpEmptyBeforeHandler new).
+	mp := MpMethodProxy onMethod: (FullBlockClosure lookupSelector: #value) handler: (handler := MpCountingHandler new).
 	
 	self installMethodProxy: mp.
 	mp disableInstrumentation.
@@ -322,7 +322,7 @@ MpMethodProxyTest >> testDisableInstrumentationValueWithException [
 	| mp handler |
 	mp := MpMethodProxy
 		      onMethod: (FullBlockClosure lookupSelector: #value)
-		      handler: (handler := MpEmptyBeforeHandler new).
+		      handler: (handler := MpCountingHandler new).
 
 	self installMethodProxy: mp.
 	mp disableInstrumentation.
@@ -340,7 +340,7 @@ MpMethodProxyTest >> testDisableInstrumentationValueWithException [
 MpMethodProxyTest >> testExceptionsAfterInstrumentationDoNotBreakInstrumentation [
 
 	| mp handler |
-	mp := MpMethodProxy onMethod: Object >> #error: handler: (handler := MpEmptyBeforeHandler new).
+	mp := MpMethodProxy onMethod: Object >> #error: handler: (handler := MpCountingHandler new).
 	
 	self installMethodProxy: mp.
 
@@ -357,7 +357,7 @@ MpMethodProxyTest >> testExceptionsAfterInstrumentationDoNotBreakInstrumentation
 MpMethodProxyTest >> testExceptionsAfterInstrumentationFlow [
 "Managing exceptions in the wrapper"
 	| p |
-	p := MpMethodProxy onMethod: Object >> #error: handler: MpEmptyBeforeHandler new.
+	p := MpMethodProxy onMethod: Object >> #error: handler: MpCountingHandler new.
 	
 	self installMethodProxy: p.
 

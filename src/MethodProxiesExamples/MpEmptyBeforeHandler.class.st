@@ -12,5 +12,5 @@ Class {
 }
 
 { #category : 'as yet unclassified' }
-MpEmptyBeforeHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
+MpEmptyBeforeHandler >> beforeExecutionWithReceiver: anObject [
 ]
