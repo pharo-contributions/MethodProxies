@@ -12,6 +12,12 @@ Class {
 }
 
 { #category : 'evaluating' }
+MpCountingHandler >> beforeExecutionWithReceiver: anObject [
+
+	self count: self count + 1
+]
+
+{ #category : 'evaluating' }
 MpCountingHandler >> beforeExecutionWithReceiver: anObject arguments: anArrayOfObjects [
 
 	self count: self count + 1

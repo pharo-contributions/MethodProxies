@@ -16,3 +16,23 @@ MpEmptyHandlerAfter >> afterExecutionWithReceiver: anObject arguments: anArrayOf
 
 	^ retVal
 ]
+
+{ #category : 'evaluating' }
+MpEmptyHandlerAfter >> afterExecutionWithReceiver: anObject returnValue: retVal [
+
+	^ retVal
+]
+
+{ #category : 'evaluating' }
+MpEmptyHandlerAfter >> afterExecutionWithReceiver: anObject with: arg returnValue: retVal [
+
+	^ retVal
+]
+
+{ #category : 'evaluating' }
+MpEmptyHandlerAfter >> beforeExecutionWithReceiver: anObject [
+]
+
+{ #category : 'evaluating' }
+MpEmptyHandlerAfter >> beforeExecutionWithReceiver: anObject with: arg [
+]
