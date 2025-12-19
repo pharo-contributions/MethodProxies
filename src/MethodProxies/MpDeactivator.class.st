@@ -19,8 +19,16 @@ Class {
 { #category : 'class initialization' }
 MpDeactivator class >> initialize [
 
-    WasMetaTempVariableIndex := (MpMethodProxy class >> #prototypeTrap) numTemps. "last temp"
-    CompleteTempVariableIndex := 2 "always the second temp"
+	| prototypeTraps tempIndexes |
+	prototypeTraps := MpMethodProxy class methods select: [ :e |
+		                  e hasPragmaNamed: #prototypeTrap ].
+
+	"Consider only the last temp, and verify that they all agree"
+	tempIndexes := prototypeTraps collect: [ :e | e numTemps ] as: Set.
+	self assert: tempIndexes size = 1.
+
+	WasMetaTempVariableIndex := tempIndexes anyOne.
+	CompleteTempVariableIndex := 2 "always the second temp"
 ]
 
 { #category : 'as yet unclassified' }

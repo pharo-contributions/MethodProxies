@@ -401,6 +401,86 @@ MpMethodProxyTest >> testInstallSetCompiledMethod [
 		mw uninstall ]
 ]
 
+{ #category : 'tests' }
+MpMethodProxyTest >> testInsteadCallsInsteadHook [
+
+	| mp1 method handler |
+	handler := MpTestHandlerWithInstead new.
+
+	method := MpClassA >> #methodWithException.
+	mp1 := MpMethodProxy
+		       onMethod: MpClassA >> #methodWithException
+		       handler: handler.
+	self installMethodProxy: mp1.
+
+	"This test implicitly shows that we do not call the original method, so no exception is raised!"
+	MpClassA new methodWithException.
+	
+	self assert: handler insteadCalls equals: 1
+]
+
+{ #category : 'tests' }
+MpMethodProxyTest >> testInsteadCallsIsMetaSafe [
+
+	| mp1 method handler |
+	handler := MpTestHandlerWithInstead new.
+	handler insteadBlock: [ :r | r methodWithException ].
+
+	method := MpClassA >> #methodWithException.
+	mp1 := MpMethodProxy
+		       onMethod: MpClassA >> #methodWithException
+		       handler: handler.
+	self installMethodProxy: mp1.
+
+	"The recursive call in the meta level reached the original method"
+	[ MpClassA new methodWithException. self fail ]
+		on: Error do: [ :e | 
+			"expected to arrive here from the meta-level!"
+			self assert: e class equals: ZeroDivide.
+			self assert: Processor activeProcess isMeta.
+	].
+
+	"And now we are back in the base level"
+	self deny: Processor activeProcess isMeta.
+	"And the instead hook was applied"
+	self assert: handler insteadCalls equals: 1.
+	
+]
+
+{ #category : 'tests' }
+MpMethodProxyTest >> testInsteadDoesNotCallAfterHook [
+
+	| mp1 method handler |
+	handler := MpTestHandlerWithInstead new.
+
+	method := MpClassA >> #methodWithException.
+	mp1 := MpMethodProxy
+		       onMethod: MpClassA >> #methodWithException
+		       handler: handler.
+	self installMethodProxy: mp1.
+
+	MpClassA new methodWithException.
+	
+	self assert: handler beforeCalls equals: 0
+]
+
+{ #category : 'tests' }
+MpMethodProxyTest >> testInsteadDoesNotCallBeforeHook [
+
+	| mp1 method handler |
+	handler := MpTestHandlerWithInstead new.
+
+	method := MpClassA >> #methodWithException.
+	mp1 := MpMethodProxy
+		       onMethod: MpClassA >> #methodWithException
+		       handler: handler.
+	self installMethodProxy: mp1.
+
+	MpClassA new methodWithException.
+	
+	self assert: handler beforeCalls equals: 0
+]
+
 { #category : 'tests - installation' }
 MpMethodProxyTest >> testIsInstalled [
 
