@@ -152,6 +152,8 @@ MpHandler >> insteadExecutionWithReceiver: anObject with: arg1 with: arg2 with: 
 MpHandler >> overridesAfterMethodFor: anInteger [
 
 	| argKeywords |
+	
+	anInteger > 5 ifTrue: [ ^ false ].
 	argKeywords := '' join: ((1 to: anInteger) collect: [ :i | 'with:' ]).
 
 	^ (self class lookupSelector:
@@ -170,6 +172,8 @@ MpHandler >> overridesBeforeMethod [
 MpHandler >> overridesBeforeMethodFor: anInteger [
 
 	| argKeywords |
+	
+	anInteger > 5 ifTrue: [ ^ false ].
 	argKeywords := '' join: ((1 to: anInteger) collect: [ :i | 'with:' ]).
 
 	^ (self class lookupSelector:
@@ -181,6 +185,8 @@ MpHandler >> overridesBeforeMethodFor: anInteger [
 MpHandler >> overridesInsteadMethodFor: anInteger [
 
 	| argKeywords |
+	
+	anInteger > 5 ifTrue: [ ^ false ].
 	argKeywords := '' join: ((1 to: anInteger) collect: [ :i | 'with:' ]).
 
 	^ (self class lookupSelector:
