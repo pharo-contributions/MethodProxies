@@ -114,6 +114,12 @@ MpHandler >> beforeMethod [
     
 ]
 
+{ #category : 'as yet unclassified' }
+MpHandler >> canHandle: arity [
+
+	^ arity < 6
+]
+
 { #category : 'evaluating' }
 MpHandler >> insteadExecutionWithReceiver: anObject [
 	^ self insteadExecutionWithReceiver: anObject arguments: {}
@@ -149,10 +155,12 @@ MpHandler >> insteadExecutionWithReceiver: anObject with: arg1 with: arg2 with: 
 ]
 
 { #category : 'as yet unclassified' }
-MpHandler >> overridesAfterMethodFor: anInteger [
+MpHandler >> overridesAfterMethodFor: arity [
 
 	| argKeywords |
-	argKeywords := '' join: ((1 to: anInteger) collect: [ :i | 'with:' ]).
+	
+	(self canHandle: arity) ifFalse: [ ^ false ].
+	argKeywords := '' join: ((1 to: arity) collect: [ :i | 'with:' ]).
 
 	^ (self class lookupSelector:
 		   (#afterExecutionWithReceiver: , argKeywords, 'returnValue:') asSymbol)
@@ -167,10 +175,12 @@ MpHandler >> overridesBeforeMethod [
 ]
 
 { #category : 'as yet unclassified' }
-MpHandler >> overridesBeforeMethodFor: anInteger [
+MpHandler >> overridesBeforeMethodFor: arity [
 
 	| argKeywords |
-	argKeywords := '' join: ((1 to: anInteger) collect: [ :i | 'with:' ]).
+	
+	(self canHandle: arity) ifFalse: [ ^ false ].
+	argKeywords := '' join: ((1 to: arity) collect: [ :i | 'with:' ]).
 
 	^ (self class lookupSelector:
 		   (#beforeExecutionWithReceiver: , argKeywords) asSymbol)
@@ -178,10 +188,12 @@ MpHandler >> overridesBeforeMethodFor: anInteger [
 ]
 
 { #category : 'as yet unclassified' }
-MpHandler >> overridesInsteadMethodFor: anInteger [
+MpHandler >> overridesInsteadMethodFor: arity [
 
 	| argKeywords |
-	argKeywords := '' join: ((1 to: anInteger) collect: [ :i | 'with:' ]).
+	
+	(self canHandle: arity) ifFalse: [ ^ false ].
+	argKeywords := '' join: ((1 to: arity) collect: [ :i | 'with:' ]).
 
 	^ (self class lookupSelector:
 		   (#insteadExecutionWithReceiver: , argKeywords) asSymbol)
