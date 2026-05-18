@@ -157,10 +157,6 @@ The trap also tracks a meta-level state on the active process. Whenever a hook e
 
 The architecture has two strata: `MpMethodProxy` manages the lifecycle of an instrumented method and hides the implementation details, while `MpHandler` is the root class users subclass to define their controlling methods.
 
-![Architecture](https://github.com/user-attachments/assets/c617f480-702d-49d3-8e33-c1aec0756258)
-
-![Instrumentation](https://github.com/user-attachments/assets/6c9a0f6a-011e-49f9-a196-3d2ef5c1d5d7)
-
 A full description of the design, the implementation, and the empirical evaluation is available in the IWST '24 paper listed in the bibliography. On a suite of 48 benchmarks across four real-world applications, the average overhead is about 1.54× and the meta-safety mechanism itself adds roughly 9% on top. Compared to instrumentation based on the `run:with:in:` hook — which cannot be JIT-compiled — MethodProxies is on average 6.5× faster, with peaks up to 40×.
 
 ## Advanced: Propagating Handlers
