@@ -204,4 +204,3 @@ proxies do: #uninstall.
 ## Bibliography
 
 - Jordan Montaño S., Sandoval Alcócer J., Polito G., Ducasse S., Tesone P. *MethodProxies: A Safe and Fast Message-Passing Control Library.* IWST '24, June 2024, France. [PDF](https://hal.science/hal-04708729v1/document)
-- Stéphane Ducasse. *Evaluating Message Passing Control Techniques in Smalltalk.* Journal of Object-Oriented Programming (JOOP), 12, 39–44, SIGS Press, 1999. [PDF](http://rmod-files.lille.inria.fr/Team/Texts/Papers/Duca99aMsgPassingControl.pdf)
