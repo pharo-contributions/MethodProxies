@@ -32,7 +32,27 @@ spec
 
 ## Basic Usage
 
-A proxy associates a method with a handler. You install it, enable instrumentation, run your code, then uninstall.
+A proxy associates a method with a handler. You install it, enable instrumentation, run your code, then uninstall. The handler decides what to do — here, `MpCountingHandler` simply counts every invocation of the wrapped method:
+
+```st
+handler := MpCountingHandler new.
+p := MpMethodProxy
+    onMethod: String >> #asUppercase
+    handler: handler.
+p install.
+p enableInstrumentation.
+
+'hello' asUppercase.
+'world' asUppercase.
+
+p uninstall.
+handler count.
+>>> 2
+```
+
+### Instrumenting methods that throw exceptions
+
+MethodProxies can wrap **any** method, including methods that always raise an exception or perform a non-local return. The hooks fire normally and the exception keeps propagating to the caller:
 
 ```st
 handler := MpCountingHandler new.
@@ -41,13 +61,17 @@ p := MpMethodProxy
     handler: handler.
 p install.
 p enableInstrumentation.
-1 error: 'foo'.
+
+[ 1 error: 'foo' ] on: Error do: [ :e | "swallow the error" ].
+
 p uninstall.
 handler count.
 >>> 1
 ```
 
-A failure inside a handler will not corrupt the system. The framework safely unwinds the stack and restores normal execution:
+### A failing handler does not corrupt the system
+
+Even when the handler itself fails, the framework safely unwinds the stack and leaves the system in a consistent state:
 
 ```st
 p := MpMethodProxy
