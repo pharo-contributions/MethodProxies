@@ -1,38 +1,44 @@
 # MethodProxies
 
-MethodProxies is a Pharo instrumentation library that implements message-passing control (it controls method execution). It features a stratified architecture that cleanly separates the instrumentation mechanism from the user-defined controlling methods.
-Users simply need to **subclass a handler class** and define the desired controlling methods.
-The library ensures that these methods execute safely, as concerns such as meta-safety and stack unwinding are managed by the framework. Its robust design allows MethodProxies to instrument any method safely.
+MethodProxies is a Pharo instrumentation library for **message-passing control**. It lets you execute custom code **before**, **after**, **instead of**, or **during the unwind of** any method execution — without changing the method's source.
 
-Message-passing control is an instrumentation paradigm where programs are instrumented to perform actions before, instead, and after a message is sent. This replaces the original method entirely, or performs no additional action at all.
+It is designed for building profilers, tracers, call-graph analyzers, mocks, and other dynamic analysis tools. Its stratified architecture cleanly separates the instrumentation mechanism (handled by the framework) from the user-defined behavior, so all you need to do is **subclass a handler** and define a few hooks.
 
-## How to load
+MethodProxies guarantees:
+
+- **Meta-safety** — instrumented methods can safely call other instrumented methods without triggering infinite recursion.
+- **Unwind-safety** — non-local returns and exceptions are handled correctly.
+- **Meta-thread safety** — the meta-level state is tracked per process.
+- **Dynamic (de)instrumentation** — instrumentation can be installed and removed at run time.
+- **Practical overhead** — the trap-method approach integrates with the JIT and with polymorphic inline caches.
+
+## Loading
 
 ```st
 EpMonitor disableDuring: [
-	Metacello new
-		baseline: 'MethodProxies';
-		repository: 'github://pharo-contributions/MethodProxies/src';
-		load. ]
+    Metacello new
+        baseline: 'MethodProxies';
+        repository: 'github://pharo-contributions/MethodProxies/src';
+        load ]
 ```
 
-#### How to depend on this project
+To depend on it from your own baseline:
 
 ```st
-spec 
-    baseline: 'MethodProxies' 
-    with: [ spec repository: 'github://pharo-contributions/MethodProxies/src' ].
+spec
+    baseline: 'MethodProxies'
+    with: [ spec repository: 'github://pharo-contributions/MethodProxies/src' ]
 ```
 
-## Examples
+## Basic Usage
 
-A simple counting handler.
+A proxy associates a method with a handler. You install it, enable instrumentation, run your code, then uninstall.
 
 ```st
-handler :=  MpCountingHandler new.
-p := MpMethodProxy 
-	onMethod: Object >> #error: 
-	handler: handler.
+handler := MpCountingHandler new.
+p := MpMethodProxy
+    onMethod: Object >> #error:
+    handler: handler.
 p install.
 p enableInstrumentation.
 1 error: 'foo'.
@@ -41,107 +47,139 @@ handler count.
 >>> 1
 ```
 
-A simple example showing that an handler may failed still the system does not destroy Pharo.
+A failure inside a handler will not corrupt the system. The framework safely unwinds the stack and restores normal execution:
 
 ```st
-"Managing exceptions in the spyied method"
-
-p := MpMethodProxy 
-        onMethod: MpClassB >> #methodTwo 
-	handler: MpFailingBeforeHandler new.
+p := MpMethodProxy
+    onMethod: MpClassB >> #methodTwo
+    handler: MpFailingBeforeHandler new.
 p install.
 p enableInstrumentation.
 MpClassB new methodTwo.
 p uninstall.
 ```
 
-### Sharing Handlers
+## Defining a Handler
 
-The design of method proxies supports the sharing of handlers between multiple proxied methods. 
-For example the following example shows how we can monitor and gather information about `new` and `new:` in the same place
+Subclass `MpHandler` and override one or more of the hooks below.
+
+### `before` and `after`
+
+```st
+beforeExecutionWithReceiver: receiver arguments: args
+    "Called before the controlled method runs."
+
+afterExecutionWithReceiver: receiver arguments: args returnValue: value
+    "Called after a normal return. MUST return the value the proxied method should yield.
+     Return `value` to keep it as-is, or return something else to override the result."
+```
+
+For convenience, two simpler hooks are also provided. They are useful when the receiver, the arguments, or the return value are not needed:
+
+```st
+beforeMethod    "no arguments"
+afterMethod     "no arguments, cannot modify the return value"
+```
+
+Example — a handler that rewrites the return value (defined on a subclass `MpChangesReturnValueHandler` of `MpHandler`):
+
+```st
+MpChangesReturnValueHandler >>
+afterExecutionWithReceiver: receiver arguments: arguments returnValue: returnValue
+    ^ 'trapped [' , returnValue asString , ']'
+```
+
+### `instead` — replace the original method
+
+The `instead` hook completely replaces the original method body. When `instead` is defined, `before` and `after` are **not** invoked: the original method is never called.
+
+For example, a handler `MpAlwaysReturn42Handler` (a subclass of `MpHandler`) can override the receiver's behavior like this:
+
+```st
+MpAlwaysReturn42Handler >> insteadExecutionWithReceiver: receiver
+    ^ 42
+```
+
+Using it:
+
+```st
+p := MpMethodProxy
+    onMethod: MpClassA >> #methodOne
+    handler: MpAlwaysReturn42Handler new.
+p install.
+p enableInstrumentation.
+MpClassA new methodOne.
+>>> 42                "the original method is not executed"
+p uninstall.
+```
+
+For methods that take arguments, use `insteadExecutionWithReceiver:arguments:` (or one of the keyword variants `insteadExecutionWithReceiver:with:`, `...with:with:`, etc.).
+
+The `instead` hook is useful for mocking, stubbing in tests, fault injection, or quickly experimenting with alternative implementations.
+
+### Unwind — non-local returns and exceptions
+
+`aboutToReturnWithReceiver:arguments:` is invoked when the controlled method exits via a stack unwind — an exception or a non-local return. By default it delegates to `afterExecutionWithReceiver:arguments:returnValue:` with a `nil` return value, but you can override it to react specifically to abnormal exits:
+
+```st
+MyHandler >> aboutToReturnWithReceiver: receiver arguments: args
+    "Called only when the method is being unwound."
+    ...
+```
+
+### Sharing handlers
+
+The same handler can be installed on multiple methods, which is convenient for aggregating information from several places. For example, monitoring `basicNew` and `clone` together:
 
 ```st
 h := MpAllocationProfilerHandler new.
-p1 := MpMethodProxy 
-	onMethod: Behavior >> #basicNew 
-	handler: h.
-p2 := MpMethodProxy 
-	onMethod: Object >> #clone 
-	handler: h.
+p1 := MpMethodProxy onMethod: Behavior >> #basicNew handler: h.
+p2 := MpMethodProxy onMethod: Object   >> #clone    handler: h.
 
-p1 install.
-p2 install.
-p1 enableInstrumentation.
-p2 enableInstrumentation.
+p1 install. p2 install.
+p1 enableInstrumentation. p2 enableInstrumentation.
 
 Object new clone.
 
-p1 uninstall.
-p2 uninstall.
-
+p1 uninstall. p2 uninstall.
 h allocations size
 >>> 2
 ```
 
-### Automatically proxies propagation (virus) 
+## Design
 
-A more advanced and challenging for the architecture of method proxies is a propagating handler. 
-The idea is simple, before a method executes, all the implementor methods of its messages are proxified with propagating handlers.
-So instead of proxifying the complete system only we subpart is spyied. This is this challenging because the infrastructure should make sure that we are not proxifying the code that is proxifying the system else we would end up in a severe and endless loop. 
-The handler design protects you from that by avoiding that you extend and break the clear separation between base and meta-level.
+MethodProxies rests on two pillars: **handlers** and the **trap method**.
+
+- Each instrumented method is associated with a handler. Users subclass `MpHandler` and override the hooks; they never touch the low-level machinery. Different methods can have different handlers, and handlers can be shared.
+- The **trap method** is a precompiled template installed in place of the instrumented method. At installation time it is patched via *literal patching* to reference the actual handler and the original method. The original method is kept in the same method dictionary under a hidden selector, so the forwarding call becomes a monomorphic, JIT-friendly message send.
+
+The trap also tracks a meta-level state on the active process. Whenever a hook executes, the process is marked as *meta*. While in this state, any instrumented method called from within the handler short-circuits to the original behavior, which avoids the infinite-recursion problem that affects simpler approaches. Stack unwinds are handled directly through the VM's unwind mechanism, **without allocating block closures**, giving significantly better performance than approaches based on `ensure:`.
+
+The architecture has two strata: `MpMethodProxy` manages the lifecycle of an instrumented method and hides the implementation details, while `MpHandler` is the root class users subclass to define their controlling methods.
+
+![Architecture](https://github.com/user-attachments/assets/c617f480-702d-49d3-8e33-c1aec0756258)
+
+![Instrumentation](https://github.com/user-attachments/assets/6c9a0f6a-011e-49f9-a196-3d2ef5c1d5d7)
+
+A full description of the design, the implementation, and the empirical evaluation is available in the IWST '24 paper listed in the bibliography. On a suite of 48 benchmarks across four real-world applications, the average overhead is about 1.54× and the meta-safety mechanism itself adds roughly 9% on top. Compared to instrumentation based on the `run:with:in:` hook — which cannot be JIT-compiled — MethodProxies is on average 6.5× faster, with peaks up to 40×.
+
+## Advanced: Propagating Handlers
+
+A more advanced use case is a *propagating* handler: before a method runs, all the implementors of the messages it sends are themselves wrapped with the same kind of handler. Instead of instrumenting the entire system upfront, only the subset of code that actually executes is instrumented. The challenge is to avoid instrumenting the instrumentation code itself, which would lead to an infinite loop. The handler design and the meta-safety mechanism take care of this by preserving the separation between base and meta levels.
 
 ```st
 testCase := StringTest selector: #testAsCamelCase.
-method :=  StringTest >> #testAsCamelCase.
-(MpMethodProxy 
-   onMethod: method 
-   handler: MpProfilingHandler new) install; enableInstrumentation.
+method   := StringTest >> #testAsCamelCase.
+(MpMethodProxy
+    onMethod: method
+    handler: MpProfilingHandler new) install; enableInstrumentation.
 testCase run.
 
 proxies := MpMethodProxy allInstances.
 proxies do: #uninstall.
 ```
 
-## Design 
-
-MethodProxies design rests on two pillars: **handlers** and the **trap method** as presented in the Figure below.
-
-- Each controlled method is associated with a dedicated handler that defines the controlling methods. This specialization allows different instrumented methods to execute different handlers: **each controlled method can have its own handler**. Handlers can also be shared.
-- The second pillar, the trap method, is a **pre-compiled template method**. Instrumentation is achieved by copying the trap method and applying literal patching to replace the literal references to the actual handler and the original method. Finally, the trap method leverages Pharo’s *stack unwinding* mechanism to guarantee execution of the handlers without allocating block closures, gaining significantly in performance. The trap method is a precompiled template in which the before and after method handlers, and the original method are represented as literals, later updated through literal patching. It ensures safety by including a meta-safe mechanism to prevent infinite recursion and safe stack unwinds.
-
-![UML](https://github.com/user-attachments/assets/c617f480-702d-49d3-8e33-c1aec0756258)
-
-MethodProxies has a stratified architecture structured around two core classes: `MpMethodProxy` and `MpHandler`:
-
-- `MpMethodProxy` manages the lifecycle of an instrumented method. Users are not exposed to the internal logic and the implementation details.
-- `MpHandler` is the root of handlers. Users can subclass it and define the controlling methods.
-
-Its API is composed of three methods:
-
-- `beforeExecutionWithReceiver:arguments:` is called before the controlled method is invoked. It receives as arguments the actual receiver and the arguments of the controlled message send.
-- `aboutToReturnWithReceiver:arguments:` is called before the controlled method exits due to a stack unwind. This situation occurs in the presence of non-local returns or exceptions.
-- `afterExecutionWithReceiver:arguments:returnValue:` is called after the controlled method returns. This hook allows executing actions after the method has run, inspecting or modifying the return value. The return value of the controlled call is passed as an argument, and the method must return the final value to be used as the result of the instrumented method.
-
-Moreover, two higher-level hooks are provided, defined in terms of the ones described above.
-- `beforeMethod` is invoked before the method execution begins.
-- It is a simpler version of `beforeExecutionWithReceiver:arguments:` that does not receives any arguments.
-- `afterMethod` is invoked before the method returns, either by normal completion or due to a stack unwind. This method does not receives any arguments and it does not allow modification of the return value.
-
-![Instrumentation](https://github.com/user-attachments/assets/6c9a0f6a-011e-49f9-a196-3d2ef5c1d5d7)
-
-## Some Archeology and History
-
-Method Wrappers were originally developed by John Brant for proprietary software. You can read "Evaluating Message Passing Control" article from S. Ducasse to understand the original implementation and a comparison with other approaches. What you see is that back in 1998/9 there were already multiple ways to control message passing. Method Wrappers is one of them. 
-
-MethodWrappers were basically using CompiledMethod prototypes that were patched (cloned + adding selector/class) during their application because the VM of the system where Method Wrappers were implemented did not support to have anything but CompiledMethod as value of method dictionaries. 
-This is not the case for Pharo. And the design and implementation of MethodProxies allows us to wrap any part of the system and in addition to design propagating proxies without blowing up the system. This is a key properties for us.
-
-**Note for grumpies.** For the people that could think that we would like to steal this idea, we encourage them to lower their paranoia by having a look at our CV and publication record list. We redeveloped from scratch this library while taking into account the original intention and we wrote many tests to validate them.
-
 ## Bibliography
 
-- Jordan Montaño S., Sandoval Alcócer J., Polito G., Ducasse S., Tesone P., MethodProxies: A Safe and Fast Message-Passing Control Library, IWST '24 June 2024, France. [PDF](https://hal.science/hal-04708729v1/document)
-- Stéphane Ducasse, Evaluating Message Passing Control Techniques in Smalltalk, Journal of Object-Oriented Programming (JOOP), 12, 39–44, SIGS Press, 1999, Impact factor 0.306. [PDF](http://rmod-files.lille.inria.fr/Team/Texts/Papers/Duca99aMsgPassingControl.pdf)
-- John Brant, Brian Foote, Ralph E. Johnson, and Donald Roberts. Wrappers to the Rescue. In Proceedings of European Conference on Object-Oriented Programming (ECOOP). Springer, Berlin, Heidelberg, 1998. http://www.laputan.org/brant/brant.html (https://link.springer.com/chapter/10.1007/BFb0054101)
-
-
+- Jordan Montaño S., Sandoval Alcócer J., Polito G., Ducasse S., Tesone P. *MethodProxies: A Safe and Fast Message-Passing Control Library.* IWST '24, June 2024, France. [PDF](https://hal.science/hal-04708729v1/document)
+- Stéphane Ducasse. *Evaluating Message Passing Control Techniques in Smalltalk.* Journal of Object-Oriented Programming (JOOP), 12, 39–44, SIGS Press, 1999. [PDF](http://rmod-files.lille.inria.fr/Team/Texts/Papers/Duca99aMsgPassingControl.pdf)
